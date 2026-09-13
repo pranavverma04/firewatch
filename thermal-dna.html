@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thermal DNA · FireWatch</title>
+<meta name="description" content="Read the thermal DNA of any location: its ten-year temperature baseline, its live fire-pixel fingerprint and its burning season, then a verdict on whether the current heat is abnormal for that place.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="FireWatch Thermal DNA · Is this heat normal here?">
+<meta property="og:description" content="Ten years of temperature history, seven days of live fire pixels and the local burning season, read together for one location.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/thermal-dna.html">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true" style="background-image:url('assets/still-plant.jpg')"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>Thermal DNA</span></div>
+    <h1>Is this heat normal here?</h1>
+    <p class="lede">Every place has a thermal signature: how hot it usually runs at this time of year, whether it burns every season, whether heat returns to the same point at night. Pick a location and FireWatch reads that signature from ten years of records and seven days of live satellite passes, then says whether what it sees now is abnormal for that place.</p>
+  </div>
+</header>
+
+<section class="section dash rv" id="dna-pick" aria-label="Choose a location" style="padding-top:56px">
+  <div class="wrap">
+    <div class="status part">
+      <span class="live"><i></i>Live sources</span>
+      <span>Baseline <b>ERA5 via Open-Meteo, 10 years</b></span>
+      <span>Recent days <b>Open-Meteo analysis</b></span>
+      <span>Fire pixels <b>NASA VIIRS, last 7 days</b></span>
+    </div>
+    <div class="panel part dna-picker">
+      <div class="panel-head">
+        <div><span class="eyebrow">Location</span><h3>Choose what to read</h3></div>
+        <span class="cmp-count mono" id="dna-coord">No location yet</span>
+      </div>
+      <div class="dna-pick-grid">
+        <div class="dna-pick-l">
+          <label class="mono dna-lbl" for="dna-select">A hotspot from the feed</label>
+          <select id="dna-select" class="rec-select" aria-label="Choose a detection record"><option value="">Pick a record</option></select>
+          <div class="dna-or mono">or</div>
+          <div class="dna-latlon">
+            <label class="mono dna-lbl" for="dna-lat">Latitude</label><input id="dna-lat" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" placeholder="28.6692">
+            <label class="mono dna-lbl" for="dna-lon">Longitude</label><input id="dna-lon" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" placeholder="77.4538">
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="dna-loc">Use my location</button>
+            <button type="button" class="btn btn-primary" id="dna-run">Read the thermal DNA</button>
+          </div>
+          <p class="small dna-hint">Or click anywhere on the map. Reading takes a few seconds: three live services answer in the background.</p>
+          <p class="lc-status mono" id="dna-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dna-pick-map map-l" style="margin-top:0">
+          <div id="dna-map" role="region" aria-label="Click the map to choose a location"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section rv" id="dna-result" aria-label="Thermal DNA reading" hidden>
+  <div class="wrap">
+    <div class="dna-verdict part" id="dna-verdict">
+      <div class="dv-l">
+        <span class="kicker">Verdict</span>
+        <h2 id="dv-title">Reading</h2>
+        <p class="lede" id="dv-lede"></p>
+        <div class="dv-index">
+          <div class="dv-bar"><i id="dv-bar-fill"></i><span class="dv-marks"><b>Normal</b><b>Watch</b><b>Abnormal</b></span></div>
+          <div class="dv-num mono"><b id="dv-index">0</b><span>abnormality index, 0 to 100</span></div>
+        </div>
+      </div>
+      <div class="dv-r">
+        <span class="eyebrow">Why</span>
+        <ul class="dv-why" id="dv-why"></ul>
+        <span class="eyebrow" style="margin-top:16px">What would change it</span>
+        <p class="small" id="dv-change"></p>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="dv-evidence">Open satellite evidence</button>
+          <a class="btn btn-ghost btn-sm" id="dv-dash" href="dashboard.html">See it on the dashboard</a>
+          <button type="button" class="btn btn-ghost btn-sm" id="dv-sos" hidden>Draft an emergency SOS</button>
+          <a class="btn btn-ghost btn-sm" id="dv-nav" href="respond.html">Navigate there</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="dna-grid part">
+      <div class="panel dna-card">
+        <div class="panel-head"><div><span class="eyebrow">Strand 1</span><h3>Climate baseline</h3></div><span class="tag" id="c1-tag" style="--tc:var(--text-secondary)">reading</span></div>
+        <p class="small dna-sub">Ten years of daily maximum air temperature for this point, same time of year, plus or minus ten days.</p>
+        <div class="dna-kv" id="c1-kv"></div>
+        <div class="dna-gauge" id="c1-gauge" role="img" aria-label="Where the recent maximum sits in the ten-year distribution for these dates"></div>
+        <p class="dna-note mono" id="c1-note"></p>
+      </div>
+      <div class="panel dna-card">
+        <div class="panel-head"><div><span class="eyebrow">Strand 2</span><h3>Fire fingerprint</h3></div><span class="tag" id="c2-tag" style="--tc:var(--text-secondary)">reading</span></div>
+        <p class="small dna-sub">Live VIIRS fire pixels around the point in the last seven days: how often heat returns, whether it burns at night, how tightly it clusters.</p>
+        <div class="dna-kv" id="c2-kv"></div>
+        <div class="dna-strip" id="c2-strip" role="img" aria-label="Fire pixels per day within one kilometre, split by day and night passes"></div>
+        <p class="dna-note mono" id="c2-note"></p>
+      </div>
+      <div class="panel dna-card">
+        <div class="panel-head"><div><span class="eyebrow">Strand 3</span><h3>Season and context</h3></div><span class="tag" id="c3-tag" style="--tc:var(--text-secondary)">reading</span></div>
+        <p class="small dna-sub">Whether burning is expected here at this time of year, and what sits within three kilometres.</p>
+        <div class="dna-kv" id="c3-kv"></div>
+        <div class="dna-season" id="c3-season" role="img" aria-label="Twelve-month calendar with the expected burning windows for this region"></div>
+        <p class="dna-note mono" id="c3-note"></p>
+      </div>
+    </div>
+
+    <div class="panel part dna-history" id="dna-history">
+      <div class="panel-head">
+        <div><span class="eyebrow">Strand 4</span><h3>Threat history, last 7 days</h3></div>
+        <div class="trend-badge mono" id="h-trend" aria-live="polite"><i></i><span>reading</span></div>
+      </div>
+      <p class="small dna-sub">Every satellite pass at this site over the last seven days, scored with the same three rules FireWatch uses on the dashboard: proximity to mapped industry, recurrence so far, and the pass's confidence. The line is the threat level day by day; the direction badge says whether it is climbing, easing or holding.</p>
+      <div class="dna-kv h-kv" id="h-kv"></div>
+      <div class="h-chart" id="h-chart" role="img" aria-label="Threat level per day for the last seven days, with detection counts"></div>
+      <div class="h-days" id="h-days"></div>
+      <p class="dna-note mono" id="h-note"></p>
+      <details class="tbl-toggle"><summary class="mono">Show as a table</summary><div class="ctable-wrap" style="margin-top:12px"><table class="ctable" id="h-table"><thead><tr><th>Day</th><th>Passes</th><th>Night</th><th>Max FRP</th><th>Best confidence</th><th>Days seen so far</th><th>Threat level</th></tr></thead><tbody></tbody></table></div></details>
+    </div>
+
+    <div class="panel part dna-strand">
+      <div class="panel-head"><div><span class="eyebrow">The strand</span><h3>Twelve months of normal, and where now sits</h3></div><span class="cmp-count mono" id="strand-cap"></span></div>
+      <div class="dna-chart" id="dna-chart" role="img" aria-label="Monthly normal maximum temperature over ten years with this year's values overlaid"></div>
+      <div class="wkey mono" aria-hidden="true"><span><i style="background:var(--line-strong)"></i>Ten-year normal, monthly maximum</span><span><i style="background:var(--accent)"></i>This year</span><span><i style="background:#FFD27A"></i>Recent seven days</span></div>
+      <details class="tbl-toggle"><summary class="mono">Show as a table</summary><div class="ctable-wrap" style="margin-top:12px"><table class="ctable" id="dna-table"><thead><tr><th>Month</th><th>Normal max, °C</th><th>This year, °C</th><th>Difference</th></tr></thead><tbody></tbody></table></div></details>
+    </div>
+
+      </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), Open-Meteo (ERA5, Copernicus), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/thermal.js?v=37"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

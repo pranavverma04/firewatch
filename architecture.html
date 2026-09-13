@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Architecture · FireWatch</title>
+<meta name="description" content="From satellite pass to a ranked worklist: acquisition, rule engine, delivery, with one CSV contract between each stage.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="Architecture · FireWatch">
+<meta property="og:description" content="Three stages, one CSV contract, nothing hidden.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/architecture.html">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>Architecture</span></div>
+    <h1>From satellite pass to a ranked worklist.</h1>
+    <p class="lede">A single CSV contract between each stage, so any stage can be rebuilt or replaced without touching the others.</p>
+  </div>
+</header>
+
+<section class="section rv" id="pipeline" aria-label="Pipeline" style="padding-top:40px">
+  <div class="wrap">
+    <div class="rail part">
+      <svg class="line" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
+        <path class="track" d="M0,30 L1000,30"/>
+        <path class="draw" d="M0,30 L1000,30" pathLength="1"/>
+        <circle class="pulse" r="3"/>
+      </svg>
+      <div class="stages">
+        <article class="stage-card"><span class="n">Stage 01</span><h3>Acquisition</h3><p>NASA FIRMS hotspots, VIIRS and MODIS. OpenStreetMap industrial polygons. Distance to the nearest mapped site. Recurrence count per location.</p><div class="chips"><span>NASA FIRMS</span><span>OpenStreetMap</span><span>pandas</span></div></article>
+        <article class="stage-card"><span class="n">Stage 02</span><h3>Rule engine</h3><p>Deterministic rules. Proximity and persistence thresholds. Assigns fire type and risk band. Auditable, no black box.</p><div class="chips"><span>Deterministic rules</span><span>Explainable</span></div></article>
+        <article class="stage-card"><span class="n">Stage 03</span><h3>Delivery</h3><p>Operational map and analytics. Ranked escalation queue. CSV export for field teams. Runs offline on a single machine.</p><div class="chips"><span>Streamlit</span><span>Folium</span><span>Plotly</span></div></article>
+      </div>
+    </div>
+    <p class="contract part">One CSV between each stage. Any stage can be rebuilt without touching the others.</p>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>02</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="contract" aria-labelledby="h-contract">
+  <div class="wrap">
+    <span class="kicker part">Integration</span>
+    <h2 class="part" id="h-contract">The handover contract.</h2>
+    <p class="lede part">The application reads one file. Drop the classified detection feed beside it and it is picked up on the next interaction, no restart, no code change.</p>
+    <div class="ctable-wrap part">
+      <table class="ctable">
+        <thead><tr><th>Column</th><th>Status</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>lat, lon</td><td>required</td><td>decimal degrees, WGS 84</td></tr>
+          <tr><td>type</td><td>expected</td><td>Industrial Fire, Agricultural Burning, Other/Natural</td></tr>
+          <tr><td>risk_level</td><td>expected</td><td>Critical, High, Medium, Low</td></tr>
+          <tr><td>confidence</td><td>expected</td><td>0 to 100, or FIRMS l, n, h</td></tr>
+          <tr><td>distance_km</td><td>optional</td><td>to nearest mapped industrial site</td></tr>
+          <tr><td>days_seen</td><td>optional</td><td>distinct days the pixel returned</td></tr>
+          <tr><td>detected_on</td><td>optional</td><td>any parseable date</td></tr>
+          <tr><td>region, source</td><td>optional</td><td>free text, used for grouping</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cta part" style="margin-top:40px;display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="dashboard.html#queue">Open the escalation queue</a>
+      <a class="btn btn-ghost" href="faq.html">Read the FAQ</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FireWatch · Industrial Thermal Intelligence</title>
+<meta name="description" content="FireWatch screens every NASA FIRMS thermal hotspot against mapped industrial sites and tests it for recurrence, so a furnace is never mistaken for a field and a real fire is never lost in the noise.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="FireWatch · Heat, seen from orbit. Intent, decided on the ground.">
+<meta property="og:description" content="AI-based detection and classification of industrial fires and persistent thermal sources using NASA FIRMS, OpenStreetMap and satellite data.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<section class="hero" aria-label="Introduction">
+  <div class="stage">
+    <div class="poster" aria-hidden="true"></div>
+    <video id="hero-video" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="lane" aria-hidden="true"></div>
+
+    <div class="hud" aria-hidden="true">
+      <span class="chip"><i class="dot"></i><b id="hud-chapter">CH 01 · HEAT</b></span>
+      <span class="chip">Altitude <b id="hud-alt">408 km</b></span>
+    </div>
+
+    <div class="bands">
+      <div class="band e-blur" data-a="0.00" data-b="0.11" style="--sa:.72">
+        <span class="kicker">NASA FIRMS · VIIRS / MODIS · OpenStreetMap</span>
+        <h1 data-split="dup">Heat, seen from orbit.</h1>
+        <p class="sub">Every pass, thousands of thermal points over the world.</p>
+      </div>
+      <div class="band e-drift" data-a="0.14" data-b="0.27" style="--sa:.72">
+        <h2><span data-split="words" data-spread="0.4">A satellite reports heat.</span><br><span class="em" data-split="words" data-spread="0.2" data-th-base="0.38">Not intent.</span></h2>
+      </div>
+      <div class="band e-approach" data-a="0.30" data-b="0.43" style="--sa:.74">
+        <h2 data-split="dup">A paddy field and a factory losing containment light the same pixel.</h2>
+      </div>
+      <div class="band e-grid" data-a="0.47" data-b="0.60" style="--sa:.74" data-ramp="0.03">
+        <span class="kicker">Punjab, one season</span>
+        <span class="fig" data-split="chars" data-spread="0.3">40,557</span>
+        <span class="fig-l">satellite alerts checked on the ground.</span>
+        <span class="fig" data-split="chars" data-spread="0.3" data-th-base="0.24">17,832</span>
+        <span class="fig-l">had no fire.</span>
+      </div>
+      <div class="band e-punch" data-a="0.64" data-b="0.77" style="--sa:.74" data-ramp="0.034">
+        <h2><span class="punch" data-split="words" data-spread="0.1" data-em="Where">Where is it.</span><span class="punch" data-split="words" data-spread="0.1" data-th-base="0.2" data-em="often">How often does it return.</span><span class="punch" data-split="words" data-spread="0.1" data-th-base="0.4" data-em="sure">How sure are we.</span></h2>
+        <p class="sub">Three questions turn heat into intent.</p>
+      </div>
+      <div class="band e-rise" data-a="0.82" data-b="1.00" style="--sa:.68" data-ramp="0.036">
+        <span class="kicker">FW-0001 · 28.6692, 77.4538</span>
+        <h2 data-split="words" data-spread="0.45">One point. One verdict.</h2>
+        <p class="sub">Industrial Fire, Critical. Ranked for the officer who has to act before morning.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="dashboard.html#queue">Open the escalation queue</a>
+          <a class="btn btn-ghost" href="how-it-decides.html">How it decides</a>
+        </div>
+      </div>
+    </div>
+
+    <svg class="reticle" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="o" cx="100" cy="100" r="95"/>
+      <circle class="i" cx="100" cy="100" r="70"/>
+      <line x1="100" y1="0" x2="100" y2="14"/><line x1="100" y1="186" x2="100" y2="200"/>
+      <line x1="0" y1="100" x2="14" y2="100"/><line x1="186" y1="100" x2="200" y2="100"/>
+      <circle class="d" cx="100" cy="100" r="2.4"/>
+      <text class="lbl" x="208" y="96">FW-0001</text>
+      <text class="lbl" x="208" y="110">CRITICAL</text>
+    </svg>
+
+    <svg class="ring" viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/>
+    </svg>
+
+    <div class="static-copy">
+      <span class="kicker">NASA FIRMS · OpenStreetMap · Rule engine</span>
+      <h1>Heat, seen from orbit. Intent, decided on the ground.</h1>
+      <p class="sub">FireWatch matches every satellite hotspot against mapped industrial sites and tests it for recurrence, so a furnace is never mistaken for a field, and a real fire is never lost in the noise.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="dashboard.html#queue">Open the escalation queue</a>
+        <a class="btn btn-ghost" href="how-it-decides.html">How it decides</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="opsbar" aria-label="Feed status">
+  <div class="wrap">
+    <span class="live"><i></i>Live screening</span>
+    <span class="sep" aria-hidden="true"></span>
+    <div class="tk" id="tk" aria-hidden="true"></div>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="r">Sample dataset <b id="ops-n">67</b> records</span>
+  </div>
+</div>
+
+<section class="prov rv" aria-labelledby="h-prov">
+  <div class="wrap">
+    <p class="pl part" id="h-prov">Built on the feeds a department already cites.</p>
+    <div class="prow part">
+      <div class="p-item"><b>NASA FIRMS · VIIRS</b><span>S-NPP, NOAA-20, NOAA-21 · 375 m pixel</span></div>
+      <div class="p-item"><b>NASA FIRMS · MODIS</b><span>Aqua and Terra · about 1 km pixel</span></div>
+      <div class="p-item"><b>OpenStreetMap</b><span>Mapped industrial polygons · keyless</span></div>
+      <div class="p-item"><b>Near real time</b><span>Published within 3 hours of overpass</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section rv" id="what" aria-labelledby="h-what">
+  <div class="wrap">
+    <div class="wgrid">
+      <div>
+        <span class="kicker part">What it is</span>
+        <h2 class="part" id="h-what">A satellite reports heat. FireWatch reports <span class="em">intent.</span></h2>
+        <p class="lede part">Every thermal point from NASA FIRMS is measured against mapped industrial sites, tested for recurrence across separate passes, and ranked by what it would cost to ignore. What reaches the officer is a worklist, not a feed.</p>
+        <div class="row part">
+          <a class="btn btn-primary" href="dashboard.html#queue">Open the escalation queue</a>
+          <a class="btn btn-ghost" href="how-it-decides.html">Read the rules</a>
+        </div>
+      </div>
+      <figure class="frame part" style="margin:0">
+        <img src="assets/still-plant.jpg" alt="A single industrial plant at night, one furnace stack glowing at its mouth" width="1600" height="1100" loading="lazy" decoding="async">
+        <i class="cnr tl" aria-hidden="true"></i><i class="cnr br" aria-hidden="true"></i>
+        <figcaption>One furnace, seen at 375 m per pixel</figcaption>
+      </figure>
+    </div>
+    <div class="statrow">
+      <div class="stat part"><b>3 km</b><span>Proximity trigger. How close the heat sits to a mapped industrial site.</span></div>
+      <div class="stat part"><b>3 days</b><span>Persistence trigger. How many separate passes saw it come back.</span></div>
+      <div class="stat part"><b>24 hrs</b><span>The verification window a Critical finding is routed under.</span></div>
+      <div class="stat part"><b>0</b><span>Black boxes. Every threshold on this page is readable and fixed.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section live-sec rv" id="live" aria-labelledby="h-live">
+  <div class="wrap">
+    <div class="live-head">
+      <div>
+        <span class="kicker part">On the feed</span>
+        <h2 class="part" id="h-live">Every hotspot, screened and <span class="em">ranked.</span></h2>
+      </div>
+      <div class="rwrap part">
+        <span class="rlabel">Region</span>
+        <div class="rgroup" role="group" aria-label="Region">
+          <button type="button" data-hregion="world" aria-pressed="true">World</button>
+          <button type="button" data-hregion="india" aria-pressed="false">India</button>
+        </div>
+      </div>
+    </div>
+    <div class="kpis part">
+      <div class="kpi" style="--kc:var(--text-secondary)"><div class="v" id="h-view">0</div><div class="l">Detections in view</div><div class="s">screened this window</div></div>
+      <div class="kpi" style="--kc:var(--risk-critical)"><div class="v" id="h-crit">0</div><div class="l">Critical</div><div class="s">immediate verification</div></div>
+      <div class="kpi" style="--kc:var(--risk-high)"><div class="v" id="h-high">0</div><div class="l">High</div><div class="s">same-week inspection</div></div>
+      <div class="kpi" style="--kc:var(--type-industrial)"><div class="v" id="h-ind">0</div><div class="l">Industrial signatures</div><div class="s">classified by rule engine</div></div>
+      <div class="kpi" style="--kc:var(--accent)"><div class="v" id="h-rec">0</div><div class="l">Recurring sites</div><div class="s">seen on 3+ separate days</div></div>
+    </div>
+    <div class="miniq part">
+      <div class="miniq-head"><span>Top of the escalation queue</span><span><b id="h-qn">0</b> waiting</span></div>
+      <ul id="h-queue"></ul>
+    </div>
+    <div class="actions part">
+      <a class="btn btn-primary" href="dashboard.html#queue">Open the full queue</a>
+      <a class="btn btn-ghost" href="dashboard.html">See the world map</a>
+      <span class="note">Sample feed, real geography</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>02</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="pixel" aria-labelledby="h-pixel">
+  <div class="wrap">
+    <span class="kicker part">The problem</span>
+    <h2 class="part" id="h-pixel">Two fires, one <span class="em">pixel.</span></h2>
+    <p class="lede part">The radiometer cannot tell these apart. Switch the source and watch the sensor readings hold still while the verdict changes.</p>
+    <div class="px-wrap part">
+      <div class="px-stage">
+        <img id="px-a" class="on" src="assets/still-field.jpg" alt="Crop residue burning across a flat field at night" width="1600" height="900" loading="lazy" decoding="async">
+        <img id="px-b" src="assets/still-plant.jpg" alt="An industrial plant at night with one glowing furnace stack" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="box" aria-hidden="true"><span>VIIRS pixel 375 m</span><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="px-side">
+        <div class="px-tabs" role="group" aria-label="Choose the source of the heat">
+          <button type="button" data-px="a" aria-pressed="true">Crop residue</button>
+          <button type="button" data-px="b" aria-pressed="false">Furnace</button>
+        </div>
+        <div class="px-read">
+          <dl>
+            <div class="lbl">What the sensor measures</div>
+            <div style="display:contents" class="same"><dt>Brightness temperature</dt><dd>331 K</dd></div>
+            <div style="display:contents" class="same"><dt>Fire radiative power</dt><dd>12.4 MW</dd></div>
+            <div style="display:contents" class="same"><dt>Pixel footprint</dt><dd>375 m</dd></div>
+            <div class="lbl">What FireWatch adds</div>
+            <div style="display:contents" class="diff"><dt>Nearest mapped industrial site</dt><dd id="px-dist">14.0 km</dd></div>
+            <div style="display:contents" class="diff"><dt>Separate days seen</dt><dd id="px-days">1</dd></div>
+            <div style="display:contents" class="diff"><dt>Land use underneath</dt><dd id="px-land">Cropland</dd></div>
+          </dl>
+        </div>
+        <div class="px-verdict" id="px-verdict" style="--tc:var(--risk-medium)">
+          <b id="px-title">Agricultural Burning, Medium</b>
+          <span id="px-note">Kept for context and never escalated. The officer never sees it in the queue.</span>
+        </div>
+      </div>
+    </div>
+    <p class="lede part" style="margin-top:34px;max-width:64ch"><span class="mono" style="color:var(--text-dim)">Punjab, one season.</span> Field teams visited 40,557 alert sites and found no fire at 17,832 of them. That is how a feed loses an officer.</p>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>03</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section live-sec rv" id="screen" aria-labelledby="h-screen">
+  <div class="wrap">
+    <span class="kicker part">Drive the rules</span>
+    <h2 class="part" id="h-screen">Screen a hotspot <span class="em">yourself.</span></h2>
+    <p class="lede part">Move the three inputs. The verdict follows the same written thresholds the engine runs on the live feed.</p>
+    <div class="scr part">
+      <div class="scr-panel">
+        <div class="presets" role="group" aria-label="Example hotspots">
+          <button type="button" data-preset="0.9,5,92">A furnace at night</button>
+          <button type="button" data-preset="14,1,58">A paddy field</button>
+          <button type="button" data-preset="2.2,1,74">A one off flare</button>
+          <button type="button" data-preset="0.4,12,88">A flare stack that never stops</button>
+          <button type="button" data-preset="26,1,31">Something warm in the hills</button>
+        </div>
+        <div class="fld">
+          <div class="top"><label for="s-dist">Distance to nearest mapped industrial site</label><span class="val" id="v-dist">0.9 km</span></div>
+          <input id="s-dist" type="range" min="1" max="300" step="1" value="9">
+          <div class="ends"><span>0.1 km</span><span>30 km</span></div>
+        </div>
+        <div class="fld">
+          <div class="top"><label for="s-days">Separate days the point came back</label><span class="val" id="v-days">5 days</span></div>
+          <input id="s-days" type="range" min="1" max="21" step="1" value="5">
+          <div class="ends"><span>1 day</span><span>21 days</span></div>
+        </div>
+        <div class="fld">
+          <div class="top"><label for="s-conf">Sensor confidence</label><span class="val" id="v-conf">92%</span></div>
+          <input id="s-conf" type="range" min="10" max="100" step="1" value="92">
+          <div class="ends"><span>10%</span><span>100%</span></div>
+        </div>
+      </div>
+      <div>
+        <ul class="rules" id="s-rules">
+          <li data-rule="prox"><span class="mark" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3"/></svg></span><span class="txt"><b>Proximity</b><span id="r-prox">within 3 km of a mapped industrial site</span></span></li>
+          <li data-rule="pers"><span class="mark" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3"/></svg></span><span class="txt"><b>Persistence</b><span id="r-pers">seen on 3 or more separate days</span></span></li>
+          <li data-rule="conf"><span class="mark" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3"/></svg></span><span class="txt"><b>Confidence</b><span id="r-conf">sensor confidence 85% or better</span></span></li>
+        </ul>
+        <div class="outcome" id="s-out" style="--tc:var(--risk-critical)">
+          <div class="bar"></div>
+          <div class="in">
+            <div class="lbl">Verdict</div>
+            <div class="type"><b id="s-type">Industrial Fire</b><span class="tag" id="s-risk" style="--tc:var(--risk-critical)">Critical</span></div>
+            <p class="handle" id="s-handle">Route to the district industrial-safety authority for ground verification within 24 hours.</p>
+            <div class="foot">Rules read, not learned</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>04</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="does" aria-labelledby="h-does">
+  <div class="wrap">
+    <span class="kicker part">What it does</span>
+    <h2 class="part" id="h-does">Five jobs, all of them <span class="em">named.</span></h2>
+    <p class="lede part">Each one runs on its own and hands the next one a CSV. Nothing in the chain is hidden from the officer who has to defend the call.</p>
+    <div class="srcs part">
+      <div class="src"><span class="n">01</span><b>Hotspot screening</b><p>Every thermal point in the window is pulled, de-duplicated, and given a distance to the nearest mapped industrial site.</p></div>
+      <div class="src"><span class="n">02</span><b>Intent classifier</b><p>Proximity, persistence, and confidence decide industrial, agricultural, or natural. Three thresholds, written down.</p></div>
+      <div class="src"><span class="n">03</span><b>Escalation queue</b><p>Critical and High only, ordered by severity then confidence. The list a district officer works through.</p></div>
+      <div class="src"><span class="n">04</span><b>Repeat offender register</b><p>Points that come back on 3 or more separate passes are held and counted, so a returning site cannot hide in one night's noise.</p></div>
+      <div class="src"><span class="n">05</span><b>Season watch</b><p>Crop residue months are labelled, not deleted. Agricultural volume stays visible as context and out of the queue.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>05</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section live-sec rv" id="who" aria-labelledby="h-who">
+  <div class="wrap">
+    <span class="kicker part">Who it is for</span>
+    <h2 class="part" id="h-who">The people who send the <span class="em">team.</span></h2>
+    <div class="whorow part">
+      <div class="who-card">
+        <b>District industrial-safety officers</b>
+        <p>A ranked morning list instead of a night of thermal points. Every row carries the satellite, the distance, the recurrence count, and the rule that fired.</p>
+      </div>
+      <div class="who-card">
+        <b>State pollution control boards</b>
+        <p>Persistent heat at a registered unit, counted across passes, with the history an inspection notice needs behind it.</p>
+      </div>
+      <div class="who-card">
+        <b>Industrial estates and plant safety leads</b>
+        <p>A view of your own perimeter, so a flare or a furnace running past its window is caught before somebody else reports it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies · Updated 11 September 2026.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

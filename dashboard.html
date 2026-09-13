@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard · FireWatch</title>
+<meta name="description" content="The FireWatch screening layer on a world map: every sample detection colored by assessed risk, the counts, and the ranked escalation queue with CSV export.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="FireWatch Dashboard · Every hotspot, screened and ranked.">
+<meta property="og:description" content="World map of thermal detections, risk counts, and the escalation queue a district industrial-safety officer works through.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/dashboard.html">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>Dashboard</span></div>
+    <h1>Every hotspot, screened and ranked.</h1>
+    <p class="lede">The screening layer on the sample feed: a world map of detections, the counts, and the escalation queue an officer works through.</p>
+  </div>
+</header>
+
+<section class="section dash rv" id="dashboard" aria-label="Screening layer" style="padding-top:56px">
+  <div class="wrap">
+    <div class="status part">
+      <span class="live"><i></i>Sample dataset</span>
+      <span>Records in view <b id="status-n">67 of 67</b></span>
+      <span>Regions in view <b id="status-regions">0</b></span>
+      <span>Observation window <b id="status-window"></b></span>
+      <span>Rendered <b id="status-rendered"></b></span>
+    </div>
+    <div class="kpis">
+      <div class="kpi" style="--kc:var(--text-secondary)"><div class="v" id="kpi-view">0</div><div class="l">Detections in view</div><div class="s">after all active filters</div></div>
+      <div class="kpi" style="--kc:var(--risk-critical)"><div class="v" id="kpi-crit">0</div><div class="l">Critical</div><div class="s">immediate verification</div></div>
+      <div class="kpi" style="--kc:var(--risk-high)"><div class="v" id="kpi-high">0</div><div class="l">High</div><div class="s">same-week inspection</div></div>
+      <div class="kpi" style="--kc:var(--type-industrial)"><div class="v" id="kpi-ind">0</div><div class="l">Industrial signatures</div><div class="s">classified by rule engine</div></div>
+      <div class="kpi" style="--kc:var(--accent)"><div class="v" id="kpi-rec">0</div><div class="l">Recurring sites</div><div class="s">seen on 3+ separate days</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div><span class="eyebrow">Operational view</span><h3>World thermal anomaly map</h3></div>
+          <div class="basemap-toggle" role="group" aria-label="Base map">
+            <button type="button" class="bm" data-basemap="map" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5 6 1.8l4 1.7 4.5-1.7v10.7L10 14.2 6 12.5l-4.5 1.7Zm4.5-.6v8.6m4-6.9v8.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Map</button>
+            <button type="button" class="bm" data-basemap="satellite" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 8h12.4M8 1.8c2.2 2 2.2 10.4 0 12.4M8 1.8c-2.2 2-2.2 10.4 0 12.4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>Satellite</button>
+          </div>
+        </div>
+        <div class="filters" role="group" aria-label="Filters">
+          <button class="fchip" aria-pressed="true" data-region="world" style="--fc:var(--text-secondary)"><i></i>World</button>
+          <button class="fchip" aria-pressed="false" data-region="india" style="--fc:var(--text-secondary)"><i></i>India</button>
+          <button class="fchip" aria-pressed="true" data-risk="Critical" style="--fc:var(--risk-critical)"><i></i>Critical</button>
+          <button class="fchip" aria-pressed="true" data-risk="High" style="--fc:var(--risk-high)"><i></i>High</button>
+          <button class="fchip" aria-pressed="true" data-risk="Medium" style="--fc:var(--risk-medium)"><i></i>Medium</button>
+          <button class="fchip" aria-pressed="true" data-risk="Low" style="--fc:var(--risk-low)"><i></i>Low</button>
+          <button class="fchip" aria-pressed="true" data-type="Industrial Fire" style="--fc:var(--type-industrial)"><i></i>Industrial</button>
+          <button class="fchip" aria-pressed="true" data-type="Agricultural Burning" style="--fc:var(--type-agri)"><i></i>Agricultural</button>
+          <button class="fchip" aria-pressed="true" data-type="Other/Natural" style="--fc:var(--type-natural)"><i></i>Other, natural</button>
+        </div>
+        <div class="map-l">
+          <div id="map-leaflet" role="region" aria-label="World map of sample thermal detections coloured by assessed risk"></div>
+          <div class="legend" aria-hidden="true">
+            <b>Assessed risk</b>
+            <div><i style="background:var(--risk-critical)"></i>Critical</div>
+            <div><i style="background:var(--risk-high)"></i>High</div>
+            <div><i style="background:var(--risk-medium)"></i>Medium</div>
+            <div><i style="background:var(--risk-low)"></i>Low</div>
+            <div class="note">Marker size follows confidence</div>
+          </div>
+        </div>
+        <p class="map-hint">Drag to pan, use the plus and minus to zoom, click a point for its record. The Map / Satellite switch above the map places each hotspot on real imagery with place names, so you can see the plant, the field or the forest under a detection. The layers button also offers OpenStreetMap streets.</p>
+      </div>
+      <div class="panel" id="queue">
+        <div class="panel-head">
+          <div><span class="eyebrow">Escalation queue</span><h3>Sites requiring intervention</h3></div>
+          <div class="seg" role="group" aria-label="Queue order">
+            <button type="button" class="sg" data-order="priority" aria-pressed="true">Priority trend</button>
+            <button type="button" class="sg" data-order="severity" aria-pressed="false">Severity</button>
+          </div>
+        </div>
+        <p class="small" style="margin-top:10px" id="queue-copy">Critical and High findings only. Priority trend puts sites that have stayed Critical across their observed days and kept returning at the top, automatically: Critical on 3 or more days and back on 5 or more. Click a row to find it on the map.</p>
+        <div class="pwatch" id="pwatch" hidden>
+          <div class="pw-l"><span class="eyebrow">Priority watch</span><b id="pw-count">0</b><span class="pw-lbl">top-priority sites in view</span></div>
+          <div class="pw-r"><div class="mono" id="pw-longest"></div><div class="mono" id="pw-live">Live check pending</div></div>
+        </div>
+        <div class="trig">
+          <div><b id="trig-a">0</b><span>Within 3 km of a mapped site</span></div>
+          <div><b id="trig-b">0</b><span>Recurring across 3+ days</span></div>
+          <div><b id="trig-c">0</b><span>Queued for verification</span></div>
+        </div>
+        <ul class="queue-list" id="queue-list" aria-live="polite"></ul>
+        <div class="qempty" id="queue-empty" hidden>No Critical or High findings in the current filter set.</div>
+        <div class="handling">Critical findings combine three independent signals: a thermal anomaly, proximity to a mapped industrial site, and recurrence across separate satellite passes. Route them to the district industrial-safety authority for ground verification within 24 hours. High findings go into the next scheduled inspection round. Agricultural and natural detections are kept for context and never escalated.</div>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" id="export" type="button">Export current view (CSV)</button>
+          <button class="btn btn-ghost btn-sm" id="sos-top" type="button" title="Draft an emergency resource request for the top item in the queue">Emergency SOS for the top finding</button>
+          <a class="btn btn-ghost btn-sm" href="report.html?scope=queue">Print-friendly report</a>
+          <a class="btn btn-ghost btn-sm" data-app-link href="#" target="_blank" rel="noopener">Launch the full FireWatch app</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

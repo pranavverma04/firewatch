@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Regions · FireWatch</title>
+<meta name="description" content="Choose a state, district, city or any named area and FireWatch analyses the incidents inside its boundary and in the immediate neighbourhood: escalations, causes, top-priority sites, live satellite passes and the pressure at the edges.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="FireWatch Regions · One area, inside and around.">
+<meta property="og:description" content="Pick an area and read its incidents inside the boundary and in the neighbourhood around it, with live satellite passes.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/regions.html">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true" style="background-image:url('assets/still-field.jpg')"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>Regions</span></div>
+    <h1>One area, inside and around.</h1>
+    <p class="lede">Choose a state, a district, a city or any named area. FireWatch draws its real boundary, reads every incident inside it and every incident pressing on it from the neighbourhood, and adds the live satellite passes of the last seven days for both.</p>
+  </div>
+</header>
+
+<section class="section dash rv" id="regions" aria-label="Region analysis" style="padding-top:56px">
+  <div class="wrap">
+    <div class="status part">
+      <span class="live"><i></i>Live sources</span>
+      <span>Boundaries <b>OpenStreetMap via Nominatim</b></span>
+      <span>Fire pixels <b>NASA VIIRS, last 7 days</b></span>
+      <span>Records <b>Sample feed, 67</b></span>
+    </div>
+
+    <div class="panel part rg-picker">
+      <div class="panel-head">
+        <div><span class="eyebrow">Area</span><h3>Choose what to analyse</h3></div>
+        <span class="cmp-count mono" id="rg-status">No area yet</span>
+      </div>
+      <div class="rg-pick-row">
+        <label class="mono dna-lbl" for="rg-select">A region from the feed</label>
+        <select id="rg-select" class="rec-select" aria-label="Choose a region from the feed"><option value="">Pick a region</option></select>
+        <span class="dna-or mono" style="margin:0">or</span>
+        <label class="mono dna-lbl" for="rg-q">Any state, district, city or area</label>
+        <form class="rg-search" id="rg-form"><input id="rg-q" type="search" placeholder="e.g. Punjab, Bengaluru, Harris County, Ruhr" autocomplete="off"><button type="submit" class="btn btn-primary btn-sm">Analyse</button></form>
+      </div>
+      <p class="small rg-hint">Neighbourhood means the band around the boundary, 30 percent of its width and at least 50 km, so a district gets its surrounding districts and a state gets its bordering states.</p>
+    </div>
+
+    <div class="rg-result" id="rg-result" hidden>
+      <div class="rg-head part">
+        <div>
+          <span class="kicker" id="rg-kicker">Region</span>
+          <h2 id="rg-title">Area</h2>
+          <p class="lede" id="rg-lede"></p>
+        </div>
+        <div class="rg-verdict" id="rg-verdict"><a class="rp-link" id="rg-report" href="report.html">Print-friendly report</a><span class="eyebrow">Neighbourhood pressure</span><b id="rg-pressure">reading</b><span class="small" id="rg-pressure-note"></span></div>
+      </div>
+
+      <div class="kpis part" id="rg-kpis">
+        <div class="kpi" style="--kc:var(--text-secondary)"><div class="v" id="k-in">0</div><div class="l">Incidents inside</div><div class="s">sample records within the boundary</div></div>
+        <div class="kpi" style="--kc:var(--risk-critical)"><div class="v" id="k-esc">0</div><div class="l">Escalated inside</div><div class="s">Critical and High</div></div>
+        <div class="kpi" style="--kc:var(--accent)"><div class="v" id="k-top">0</div><div class="l">Top priority inside</div><div class="s">sustained Critical</div></div>
+        <div class="kpi" style="--kc:var(--type-industrial)"><div class="v" id="k-nb">0</div><div class="l">In the neighbourhood</div><div class="s">records just outside</div></div>
+        <div class="kpi" style="--kc:#FFD27A"><div class="v" id="k-live">0</div><div class="l">Live passes inside</div><div class="s">VIIRS, last 7 days</div></div>
+      </div>
+
+      <div class="rg-grid part">
+        <div class="panel rg-mappanel">
+          <div class="panel-head">
+            <div><span class="eyebrow">Boundary and neighbourhood</span><h3 id="rg-map-h">Map</h3></div>
+            <div class="basemap-toggle" role="group" aria-label="Base map">
+              <button type="button" class="bm" data-basemap="map" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5 6 1.8l4 1.7 4.5-1.7v10.7L10 14.2 6 12.5l-4.5 1.7Zm4.5-.6v8.6m4-6.9v8.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Map</button>
+              <button type="button" class="bm" data-basemap="satellite" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 8h12.4M8 1.8c2.2 2 2.2 10.4 0 12.4M8 1.8c-2.2 2-2.2 10.4 0 12.4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>Satellite</button>
+            </div>
+          </div>
+          <div class="map-l rg-map"><div id="rg-mapel" role="region" aria-label="Map of the chosen area, its neighbourhood band, incidents and live fire pixels"></div>
+            <div class="legend" aria-hidden="true">
+              <b>Layers</b>
+              <div><i style="background:var(--accent);border-radius:2px"></i>Boundary</div>
+              <div><i style="background:rgba(147,166,184,.6);border-radius:2px"></i>Neighbourhood band</div>
+              <div><i style="background:var(--risk-critical)"></i>Record inside</div>
+              <div><i style="background:rgba(224,82,82,.4)"></i>Record in neighbourhood</div>
+              <div><i style="background:#FFD27A"></i>Live VIIRS pass</div>
+            </div>
+          </div>
+          <p class="map-hint" id="rg-map-hint"></p>
+        </div>
+        <div class="panel rg-side">
+          <div class="panel-head"><div><span class="eyebrow">Inside against around</span><h3>Where the pressure is</h3></div></div>
+          <div class="rg-compare" id="rg-compare"></div>
+          <div class="panel-head" style="margin-top:22px"><div><span class="eyebrow">Live passes by day</span><h3>Inside and neighbourhood</h3></div></div>
+          <div class="dbars rg-dbars" id="rg-dbars" role="img" aria-label="Live VIIRS passes per day, inside the boundary and in the neighbourhood band"></div>
+          <div class="wkey mono" aria-hidden="true"><span><i style="background:#FFD27A"></i>Inside</span><span><i style="background:rgba(147,166,184,.7)"></i>Neighbourhood</span></div>
+          <div class="panel-head" style="margin-top:22px"><div><span class="eyebrow">Hottest live clusters</span><h3>Where the passes stack</h3></div></div>
+          <ul class="rg-clusters" id="rg-clusters"></ul>
+          <div class="panel-head" style="margin-top:22px"><div><span class="eyebrow">Bordering areas</span><h3>Who shares the edge</h3></div></div>
+          <p class="small" id="rg-neighbours"></p>
+        </div>
+      </div>
+
+      <div class="rg-lists part">
+        <div class="panel">
+          <div class="panel-head"><div><span class="eyebrow">Inside the boundary</span><h3>Incidents to act on</h3></div><span class="cmp-count mono" id="rg-in-cap"></span></div>
+          <ul class="queue-list" id="rg-in-list" aria-live="polite"></ul>
+          <div class="qempty" id="rg-in-empty" hidden>No sample records inside this boundary. The live passes above still show what the satellites saw.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><span class="eyebrow">Immediate neighbourhood</span><h3>Pressing on the edge</h3></div><span class="cmp-count mono" id="rg-nb-cap"></span></div>
+          <ul class="queue-list" id="rg-nb-list"></ul>
+          <div class="qempty" id="rg-nb-empty" hidden>No sample records in the neighbourhood band.</div>
+        </div>
+      </div>
+
+          </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Boundaries © OpenStreetMap contributors via Nominatim. Data: NASA FIRMS (VIIRS). Basemaps © Esri, © OpenStreetMap contributors.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/regions.js?v=34"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

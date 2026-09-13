@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compare · FireWatch</title>
+<meta name="description" content="The same detections twice: the raw NASA FIRMS feed on one side, the FireWatch classified and risk-assessed result on the other. Maps, counts, fields and single records, side by side or one at a time.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="FireWatch Compare · Raw feed against screened feed.">
+<meta property="og:description" content="Raw NASA FIRMS detections beside the FireWatch classified, risk-assessed result. Side by side, or flip between them.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/compare.html">
+<meta property="og:image" content="https://example.com/assets/hero-ending.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true" style="background-image:url('assets/still-passes.jpg')"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>Compare</span></div>
+    <h1>Raw feed. Screened feed.</h1>
+    <p class="lede">The same detections twice. On one side, what NASA FIRMS publishes: a point, a temperature, a time. On the other, what FireWatch hands an officer: a cause, a risk tier, a place in the queue. Put them beside each other, or flip between them.</p>
+  </div>
+</header>
+
+<section class="section dash rv" id="cmp-maps" aria-label="Map comparison" style="padding-top:56px">
+  <div class="wrap">
+    <div class="cmp-top part">
+      <div class="status">
+        <span class="live"><i></i>Sample dataset</span>
+        <span>Records <b id="cmp-n">67</b></span>
+        <span>Dropped by screening <b>0</b></span>
+        <span>Observation window <b id="cmp-window"></b></span>
+      </div>
+      <div class="cmp-controls">
+        <div class="seg" role="group" aria-label="Layout">
+          <button type="button" class="sg" data-layout="side" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="5.5" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="3" width="5.5" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>Side by side</button>
+          <button type="button" class="sg" data-layout="alt" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h8.5l-2.2-2.2M13 10.5H4.5l2.2 2.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>One at a time</button>
+        </div>
+        <div class="seg cmp-which" role="group" aria-label="Which layer" hidden>
+          <button type="button" class="sg" data-which="raw" aria-pressed="true">Raw</button>
+          <button type="button" class="sg" data-which="fw" aria-pressed="false">Screened</button>
+          <button type="button" class="sg auto" id="cmp-auto" aria-pressed="false" title="Flip every few seconds">Auto</button>
+        </div>
+        <div class="seg" role="group" aria-label="Region">
+          <button type="button" class="sg" data-region="world" aria-pressed="true">World</button>
+          <button type="button" class="sg" data-region="india" aria-pressed="false">India</button>
+        </div>
+        <div class="basemap-toggle" role="group" aria-label="Base map">
+          <button type="button" class="bm" data-basemap="map" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5 6 1.8l4 1.7 4.5-1.7v10.7L10 14.2 6 12.5l-4.5 1.7Zm4.5-.6v8.6m4-6.9v8.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Map</button>
+          <button type="button" class="bm" data-basemap="satellite" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 8h12.4M8 1.8c2.2 2 2.2 10.4 0 12.4M8 1.8c-2.2 2-2.2 10.4 0 12.4" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>Satellite</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cmp-maps part" id="cmp-stage">
+      <div class="panel cmp-map on" data-side="raw">
+        <div class="panel-head">
+          <div><span class="eyebrow">Before</span><h3>Raw NASA FIRMS detections</h3></div>
+          <span class="cmp-count mono"><b id="cmp-raw-n">67</b> points, <b id="cmp-raw-act">67</b> asking for a decision</span>
+        </div>
+        <p class="small cmp-sub">Every point is a thermal anomaly. Nothing says what is burning, whether a plant sits under it, or whether it was there yesterday. Marker size follows fire radiative power.</p>
+        <div class="map-l">
+          <div id="map-raw" role="region" aria-label="Raw thermal detections, every point drawn the same way"></div>
+          <div class="legend" aria-hidden="true">
+            <b>Raw feed</b>
+            <div><i style="background:#FFD27A"></i>Thermal anomaly</div>
+            <div class="note">One class. No rank. No cause.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel cmp-map" data-side="fw">
+        <div class="panel-head">
+          <div><span class="eyebrow">After</span><h3>FireWatch classified and risk assessed</h3></div>
+          <span class="cmp-count mono"><b id="cmp-fw-n">67</b> points, <b id="cmp-fw-act">0</b> asking for a team</span>
+        </div>
+        <p class="small cmp-sub">The same points, now carrying a cause and a risk tier. Critical and High stand out. Seasonal burning and natural sources stay on the map, dimmed, and never reach the queue.</p>
+        <div class="map-l">
+          <div id="map-fw" role="region" aria-label="The same detections coloured by assessed risk"></div>
+          <div class="legend" aria-hidden="true">
+            <b>Assessed risk</b>
+            <div><i style="background:var(--risk-critical)"></i>Critical</div>
+            <div><i style="background:var(--risk-high)"></i>High</div>
+            <div><i style="background:var(--risk-medium)"></i>Medium</div>
+            <div><i style="background:var(--risk-low)"></i>Low</div>
+            <div class="note">Dimmed points are kept for context</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="map-hint part">The two maps move together. Click a point on either side and its twin opens on the other. In one-at-a-time mode the layers swap in place so the change lands on the same pixels.</p>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>02</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="cmp-numbers" aria-labelledby="h-numbers">
+  <div class="wrap">
+    <span class="kicker part">In numbers</span>
+    <h2 class="part" id="h-numbers">Nothing is removed. Everything is sorted.</h2>
+    <p class="lede part">The raw feed and the screened feed hold the same records. What changes is how many of them ask a person to act, and what each one can tell that person.</p>
+
+    <div class="pairs part" id="cmp-pairs">
+      <div class="pair"><div class="pl">Points on the map</div><div class="pv"><span class="raw"><b data-n="raw-total">67</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw"><b data-n="fw-total">67</b><small>screened</small></span></div><div class="ps">Screening drops nothing. Every detection stays visible.</div></div>
+      <div class="pair"><div class="pl">Points asking for a team</div><div class="pv"><span class="raw"><b data-n="raw-act">67</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw hot"><b data-n="fw-act">0</b><small>screened</small></span></div><div class="ps">Raw, every point is a possible fire. Screened, only Critical and High enter the queue.</div></div>
+      <div class="pair"><div class="pl">Records with a named cause</div><div class="pv"><span class="raw"><b>0</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw"><b data-n="fw-total">67</b><small>screened</small></span></div><div class="ps">Industrial fire, agricultural burning, or other natural source.</div></div>
+      <div class="pair"><div class="pl">Tied to a mapped industrial site</div><div class="pv"><span class="raw"><b>0</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw"><b data-n="fw-near">0</b><small>within 3 km</small></span></div><div class="ps">Distance to the nearest OpenStreetMap industrial polygon, computed for all 67.</div></div>
+      <div class="pair"><div class="pl">Checked for recurrence</div><div class="pv"><span class="raw"><b>0</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw"><b data-n="fw-rec">0</b><small>seen 3+ days</small></span></div><div class="ps">Distinct days the same pixel came back across separate passes.</div></div>
+      <div class="pair"><div class="pl">Set aside as seasonal or natural</div><div class="pv"><span class="raw"><b>0</b><small>raw</small></span><span class="arrow" aria-hidden="true"></span><span class="fw"><b data-n="fw-ctx">0</b><small>kept for context</small></span></div><div class="ps">Still on the map, never on a field team's list.</div></div>
+    </div>
+
+    <div class="panel part cmp-work">
+      <div class="panel-head">
+        <div><span class="eyebrow">Workload</span><h3>One officer's morning list</h3></div>
+        <span class="cmp-count mono" id="cmp-saved"></span>
+      </div>
+      <div class="wbars" id="cmp-wbars" role="img" aria-label="Two bars comparing how many detections need a decision in the raw feed and in the screened feed"></div>
+      <div class="wkey mono" aria-hidden="true">
+        <span><i style="background:#FFD27A"></i>Raw, undifferentiated</span>
+        <span><i style="background:var(--risk-critical)"></i>Critical</span>
+        <span><i style="background:var(--risk-high)"></i>High</span>
+        <span><i style="background:var(--line-strong)"></i>Kept for context</span>
+      </div>
+    </div>
+
+    <div class="panel part cmp-days">
+      <div class="panel-head">
+        <div><span class="eyebrow">By day</span><h3>Alerts received against alerts escalated</h3></div>
+        <span class="cmp-count mono">Observation window, <span id="cmp-window-2"></span></span>
+      </div>
+      <div class="dbars" id="cmp-dbars" role="img" aria-label="Paired bars per day: detections received in the raw feed and detections escalated after screening"></div>
+      <div class="wkey mono" aria-hidden="true">
+        <span><i style="background:#FFD27A"></i>Received, raw</span>
+        <span><i style="background:var(--accent)"></i>Escalated, screened</span>
+      </div>
+      <details class="tbl-toggle"><summary class="mono">Show as a table</summary><div class="ctable-wrap" style="margin-top:12px"><table class="ctable" id="cmp-dtable"><thead><tr><th>Day</th><th>Received</th><th>Escalated</th><th>Held back</th></tr></thead><tbody></tbody></table></div></details>
+    </div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>03</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="cmp-record" aria-labelledby="h-record">
+  <div class="wrap">
+    <span class="kicker part">One record</span>
+    <h2 class="part" id="h-record">The same detection, before and after.</h2>
+    <p class="lede part">Pick any NASA FIRMS record in the sample. The left card is the row as the feed publishes it. The right card is what FireWatch adds before an officer sees it.</p>
+
+    <div class="rec-pick part">
+      <label class="mono" for="cmp-select">Record</label>
+      <select id="cmp-select" class="rec-select" aria-label="Choose a detection record"></select>
+      <button type="button" class="btn btn-ghost btn-sm" id="cmp-prev" aria-label="Previous record">Previous</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cmp-next" aria-label="Next record">Next</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cmp-random">Random</button>
+    </div>
+
+    <div class="rec-grid part">
+      <article class="panel rec raw-card" aria-labelledby="rec-raw-h">
+        <div class="panel-head"><div><span class="eyebrow">Raw row, NASA FIRMS</span><h3 id="rec-raw-h">Thermal anomaly</h3></div><span class="tag" style="--tc:#FFD27A">as published</span></div>
+        <dl class="fields" id="rec-raw"></dl>
+        <p class="small rec-note">Fourteen columns. Where, how hot, how bright, when, which satellite. No cause, no site, no history, no rank.</p>
+      </article>
+      <div class="rec-arrow" aria-hidden="true"><span></span></div>
+      <article class="panel rec fw-card" aria-labelledby="rec-fw-h">
+        <div class="panel-head"><div><span class="eyebrow">Processed record, FireWatch</span><h3 id="rec-fw-h">Industrial Fire</h3></div><span class="tag" id="rec-fw-tag" style="--tc:var(--risk-critical)">Critical</span></div>
+        <dl class="fields" id="rec-fw"></dl>
+        <p class="handling" id="rec-fw-handle"></p>
+      </article>
+    </div>
+    <p class="small part" style="margin-top:14px">Rows marked <span class="fkey kept">kept</span> pass through unchanged. <span class="fkey norm">normalised</span> rows are the same value on one shared scale. <span class="fkey added">added</span> rows did not exist in the raw feed.</p>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><span>04</span><span class="ticks"><i></i><i></i><i></i></span><span class="rule"></span></div>
+
+<section class="section rv" id="cmp-fields" aria-labelledby="h-fields">
+  <div class="wrap">
+    <span class="kicker part">Field by field</span>
+    <h2 class="part" id="h-fields">What each record carries.</h2>
+    <p class="lede part">Every column in the raw feed survives. FireWatch adds the columns an officer needs to decide, and writes them in the same CSV that the rest of the system reads.</p>
+    <div class="part" style="margin-top:28px"><button type="button" class="btn btn-primary" id="fields-toggle" aria-expanded="false" aria-controls="fields-body">Know more</button></div>
+    <div class="ctable-wrap fields-body" id="fields-body" hidden>
+      <table class="ctable cmp-table">
+        <thead><tr><th>Aspect</th><th>Raw NASA FIRMS</th><th>FireWatch processed</th></tr></thead>
+        <tbody>
+          <tr><td>Position</td><td>latitude, longitude, WGS 84</td><td>kept, plus a region name from reverse geocoding</td></tr>
+          <tr><td>Heat</td><td>bright_ti4, bright_ti5 in kelvin, frp in megawatts</td><td>kept, frp shown on the record card</td></tr>
+          <tr><td>Time</td><td>acq_date, acq_time in UTC, daynight flag</td><td>kept, and rolled into days_seen across passes</td></tr>
+          <tr><td>Sensor</td><td>satellite, instrument, version, scan, track</td><td>kept as the source field</td></tr>
+          <tr><td>Confidence</td><td>VIIRS reports l, n, h. MODIS reports 0 to 100</td><td>one scale, 0 to 100. l, n, h read as 35, 65, 90</td></tr>
+          <tr><td>Cause</td><td>not present</td><td>Industrial Fire, Agricultural Burning, Other/Natural</td></tr>
+          <tr><td>Nearest industrial site</td><td>not present</td><td>distance_km to the nearest OpenStreetMap industrial polygon</td></tr>
+          <tr><td>Recurrence</td><td>not present, each pass is a fresh row</td><td>days_seen, distinct days within 1 km</td></tr>
+          <tr><td>Risk tier</td><td>not present</td><td>Critical, High, Medium, Low from three written rules</td></tr>
+          <tr><td>Recommended handling</td><td>not present</td><td>a plain sentence per tier, from 24-hour verification to logged and left alone</td></tr>
+          <tr><td>Order</td><td>by acquisition time</td><td>by severity, then confidence. The queue is the file order</td></tr>
+          <tr><td>Duplicates</td><td>one row per pixel per pass</td><td>one row per site, passes counted</td></tr>
+          <tr><td>Explanation</td><td>none needed, it is a measurement</td><td>every threshold is written down and checkable</td></tr>
+          <tr><td>Export</td><td>CSV, SHP, KML, JSON from FIRMS</td><td>CSV with every raw column plus the added ones</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>

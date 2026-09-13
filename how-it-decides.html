@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How It Decides · FireWatch</title>
+<meta name="description" content="Hold to verify a hotspot. Three written-down questions turn heat into intent: where is it, how often does it return, how sure are we.">
+<meta name="theme-color" content="#070C15">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FireWatch">
+<meta property="og:title" content="How it decides · FireWatch">
+<meta property="og:description" content="The rules are written down, not learned. A reviewing officer can read every threshold and check every verdict.">
+<!-- DEPLOY STEP: patch og:image and og:url with the live absolute URL -->
+<meta property="og:url" content="https://example.com/how-it-decides.html">
+<meta property="og:image" content="https://example.com/assets/still-passes.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070C15'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Cpath d='M16 3v5M16 24v5M3 16h5M24 16h5' stroke='%23F08A3C' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F08A3C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/style.css?v=42">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="env" aria-hidden="true"><div class="grat"></div><div class="glow"></div></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="index.html" aria-label="FireWatch, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#F08A3C" stroke-width="1.6"/><path d="M16 3v5M16 24v5M3 16h5M24 16h5" stroke="#F08A3C" stroke-width="1.6"/><circle cx="16" cy="16" r="2.6" fill="#F08A3C"/></svg>
+    <span>Fire<span class="thin">Watch</span></span>
+  </a>
+  <ul id="navlinks">
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Operations<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Operations">
+        <li><a href="dashboard.html"><b>Dashboard</b><span>Map, filters and the escalation queue</span></a></li>
+        <li><a href="regions.html"><b>Regions</b><span>One area, inside and around its boundary</span></a></li>
+        <li><a href="respond.html"><b>Respond</b><span>Route and arrival time to an incident</span></a></li>
+        <li><a href="report.html"><b>Report</b><span>Print or save a situation report</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">Analysis<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="Analysis">
+        <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
+        <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
+        <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+      </ul>
+    </li>
+    <li class="nav-group">
+      <button type="button" class="nav-gbtn" aria-expanded="false" aria-haspopup="true">About<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="nav-menu" aria-label="About">
+        <li><a href="problem.html"><b>Problem</b><span>Two fires, one pixel</span></a></li>
+        <li><a href="architecture.html"><b>Architecture</b><span>Pipeline and the CSV contract</span></a></li>
+        <li><a href="faq.html"><b>FAQs</b><span>Straight answers</span></a></li>
+      </ul>
+    </li>
+  </ul>
+  <button class="navtog" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="Open the menu"><i></i><i></i><i></i></button>
+  <a class="btn btn-primary" href="dashboard.html#queue">Open the queue</a>
+</nav>
+
+<main id="main" tabindex="-1">
+<header class="page-hero">
+  <div class="bg" aria-hidden="true" style="background-image:url('assets/still-passes.jpg')"></div><div class="veil" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">FireWatch</a><i></i><span>How it decides</span></div>
+    <h1>Hold to verify a hotspot.</h1>
+    <p class="lede">Three questions turn heat into intent. Perform them yourself below and watch the verdict land.</p>
+  </div>
+</header>
+
+<section class="section rv" id="decides" aria-label="Screen a hotspot" style="padding-top:40px">
+  <div class="wrap">
+
+    <div class="locate part">
+      <div class="lc-l">
+        <span class="eyebrow">Live screening</span>
+        <h2>Screen the sky above you.</h2>
+        <p>FireWatch pulls the live VIIRS thermal feed for your area, takes the nearest detection, measures it against industrial sites mapped in OpenStreetMap, counts how many separate days it has come back, and runs the three rules on it.</p>
+      </div>
+      <div class="lc-r">
+        <button class="btn btn-primary" id="loc-btn" type="button">Use my location</button>
+        <button class="btn btn-ghost" id="sample-btn" type="button">Screen a sample record</button>
+        <p class="lc-status mono" id="loc-status" role="status" aria-live="polite">Showing a sample record. Press the button above to screen live data near you.</p>
+      </div>
+    </div>
+
+    <div class="target part" id="target">
+      <div class="tg-head">
+        <span class="tg-tag" id="tg-tag">Sample record</span>
+        <span class="tg-id mono" id="tg-id">FW-0000</span>
+      </div>
+      <h3 id="tg-place">Loading a record</h3>
+      <dl class="tg-meta">
+        <div><dt>Coordinates</dt><dd class="mono" id="tg-coord">0.0000, 0.0000</dd></div>
+        <div><dt>Source</dt><dd class="mono" id="tg-src">NASA FIRMS</dd></div>
+        <div><dt>Acquired</dt><dd class="mono" id="tg-when">recently</dd></div>
+        <div><dt>Radiative power</dt><dd class="mono" id="tg-frp">n/a</dd></div>
+      </dl>
+      <div class="tg-actions"><button type="button" class="btn btn-ghost btn-sm" id="tg-evidence">Satellite evidence for this record</button></div>
+    </div>
+
+    <p class="lede part mono" style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-top:34px">Press and hold the point. Release early and it lets go.</p>
+    <div class="hold-stage part">
+      <ul class="sig" aria-label="Signals">
+        <li><b>Thermal anomaly</b><span id="sig-1">waiting for a record</span></li>
+        <li><b>Nearest mapped industrial site</b><span id="sig-2">waiting for a record</span></li>
+        <li><b>Recurrence</b><span id="sig-3">waiting for a record</span></li>
+      </ul>
+      <div class="instr" role="button" tabindex="0" aria-pressed="false" aria-label="Press and hold to screen this hotspot">
+        <svg viewBox="0 0 160 160" aria-hidden="true">
+          <g class="ticks"><line x1="80" y1="4" x2="80" y2="12" /><line x1="80" y1="148" x2="80" y2="156"/><line x1="4" y1="80" x2="12" y2="80"/><line x1="148" y1="80" x2="156" y2="80"/><line x1="26" y1="26" x2="32" y2="32"/><line x1="128" y1="128" x2="134" y2="134"/><line x1="26" y1="134" x2="32" y2="128"/><line x1="128" y1="32" x2="134" y2="26"/></g>
+          <circle class="ring-bg" cx="80" cy="80" r="60"/>
+          <circle class="ring-fill" cx="80" cy="80" r="60"/>
+          <circle class="halo" cx="80" cy="80" r="30"/>
+          <circle class="core" cx="80" cy="80" r="7"/>
+        </svg>
+        <span class="hint">hold</span>
+      </div>
+      <ul class="sig right" aria-hidden="true">
+        <li><b>Rule</b><span>proximity trigger ≤ 3 km</span></li>
+        <li><b>Rule</b><span>persistence trigger ≥ 3 days</span></li>
+        <li><b>Rule</b><span>severity first, then confidence</span></li>
+      </ul>
+    </div>
+    <div class="verdict part" aria-live="polite">
+      <div class="stamp"><span id="vd-type">Industrial Fire</span><span class="tag" id="vd-risk" style="--tc:var(--risk-critical)">Critical</span></div>
+      <p class="h" id="vd-handle">Ground verification within 24 hours.</p>
+      <div class="vd-actions"><button type="button" class="btn btn-ghost btn-sm" id="vd-sos">Draft an emergency SOS</button> <a class="btn btn-ghost btn-sm" id="vd-nav" href="respond.html">Navigate there</a></div>
+    </div>
+    <div class="again part" id="again" hidden>
+      <button class="btn btn-ghost btn-sm" id="again-btn" type="button">Screen another</button>
+    </div>
+    <p class="expl part">The rules are written down, not learned. A reviewing officer can read every threshold and check every verdict.</p>
+    <p class="expl part mono" style="font-size:12px;letter-spacing:.05em;color:var(--text-dim);margin-top:14px">VIIRS reports confidence as low, nominal or high. FireWatch reads those as 35%, 65% and 90% so one scale runs through the whole system.</p>
+    <div class="cta part" style="margin-top:40px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="dashboard.html#queue">Open the escalation queue</a>
+      <a class="btn btn-ghost" href="architecture.html">See the pipeline</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><b>FireWatch</b> · Industrial fire and persistent thermal source intelligence.</p>
+      <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
+    </div>
+    <div class="fr">
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/data.js?v=2"></script>
+<script src="assets/evidence.js?v=43"></script>
+<script src="assets/sos.js?v=37"></script>
+<script src="assets/main.js?v=44"></script>
+<script src="assets/alerts.js?v=31"></script>
+<script src="assets/therma.js?v=37"></script>
+<script src="assets/therma-kb.js?v=37"></script>
+<script src="assets/therma-brain.js?v=37"></script>
+<script src="assets/therma-ui.js?v=42"></script>
+</body>
+</html>
