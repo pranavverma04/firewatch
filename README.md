@@ -28,3 +28,13 @@ then open `http://localhost:8080/index.html`.
 ## Live services used (all keyless)
 
 NASA FIRMS VIIRS via the Esri/NASA Living Atlas feed, NASA GIBS imagery, Open-Meteo, OpenStreetMap Nominatim and Overpass, OSRM and Valhalla routing, Esri basemaps.
+
+## Dashboard (Python)
+
+`dashboard/` holds the FireWatch Release 1.0 operational dashboard, a Streamlit app (`final.py`) with the map, analytics view and ranked escalation queue. It falls back to sample data when no detection feed is present. See `dashboard/README.md`.
+
+```
+cd dashboard
+pip install -r requirements.txt
+streamlit run final.py
+```

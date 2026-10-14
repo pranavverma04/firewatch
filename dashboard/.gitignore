@@ -1,0 +1,12 @@
+# live detection feed — supplied at run time, never committed
+detections_classified.csv
+firewatch_detections.csv
+pair2_classified.csv
+
+# earlier drafts, kept locally
+app.py
+baisla.py
+
+__pycache__/
+*.pyc
+.DS_Store

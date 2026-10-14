@@ -1,0 +1,18 @@
+# FireWatch — pinned interface theme.
+# Keeps the application looking identical on any machine, regardless of the
+# operator's system light/dark setting.
+
+[theme]
+base = "light"
+primaryColor = "#C2410C"
+backgroundColor = "#F4F6F9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0A1F33"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true
+
+[browser]
+gatherUsageStats = false
