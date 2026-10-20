@@ -1,0 +1,252 @@
+<!-- EXPERIMENT 3: DFD + structured chart -->
+<div class="exp">EXPERIMENT – 3</div>
+<p class="aim"><b>AIM:</b> To perform the function-oriented diagram: Data Flow Diagram (DFD) and Structured Chart.</p>
+<p><b>SOFTWARE USED:</b> Draw.io</p>
+<h2>THEORY</h2>
+<h3>Level 0 DFD</h3>
+<p>A Data Flow Diagram (DFD) shows how data moves between a system and its external entities. The Level 0 DFD, also called the Context Diagram, shows FireWatch as one process. It shows the system's interaction with NASA FIRMS (thermal hotspots), OpenStreetMap (industrial polygons, boundaries and emergency services), the map, weather and routing services (GIBS imagery, Open-Meteo, OSRM), the District Safety Officer who uses the system, and the Emergency Services who receive an SOS request.</p>
+<h3>Level 1 DFD</h3>
+<p>The Level 1 DFD breaks the single process into its main internal processes: 1.0 Acquire Hotspots, 2.0 Enrich (distance to the nearest industrial site and recurrence), 3.0 Classify (the rule engine), 4.0 Map &amp; Escalation Queue, 5.0 Region Analysis &amp; Compare, 6.0 Respond, SOS &amp; Alerts, and 7.0 Build Report &amp; Export. It also shows the data stores D1 Raw Hotspots, D3 Classified Detections and D4 Alerts &amp; SOS Log. The single CSV contract between stages appears as the flow from process 2.0 to 3.0 and the store D3.</p>
+<h3>Structured Chart</h3>
+<p>A Structured Chart shows the modules of a system as a tree, with the main control module at the top and the modules it calls below it. For FireWatch the main module calls three stage modules (Acquisition, Rule Engine and Delivery), and each stage calls the smaller modules that do one job each.</p>
+
+<div class="newpage"></div>
+<script>
+new Dia(640, 470)
+  .label(320, 22, 'Level 0 DFD (Context Diagram) - FireWatch', 'h')
+  .circ('p', 320, 235, 78, '<tspan font-weight="700">0</tspan>|FireWatch|(Industrial Thermal|Screening System)', '#cfe2f3')
+  .box('firms', 95, 90, 130, 46, 'NASA FIRMS|(VIIRS / MODIS)', '#d9ead3')
+  .box('osm', 545, 90, 130, 46, 'OpenStreetMap|(Overpass, Nominatim)', '#d9ead3')
+  .box('svc', 560, 300, 140, 46, 'Map, Weather &|Routing Services', '#d9ead3')
+  .box('off', 95, 390, 140, 46, 'District Safety|Officer', '#cfe2f3')
+  .box('em', 470, 420, 130, 40, 'Emergency Services', '#fce5cd')
+  .link('firms', 'p', 'thermal hotspots|(lat, lon, date,|confidence, sensor)', { dx: -40, dy: -6 })
+  .link('p', 'osm', 'area / site queries', { off: -8, dx: 6, dy: -14 })
+  .link('osm', 'p', 'industrial polygons,|boundaries, services', { off: -8, dx: 22, dy: 22 })
+  .link('p', 'svc', 'tile / route requests', { off: -8, dx: 18, dy: -16 })
+  .link('svc', 'p', 'imagery, weather,|routes', { off: -8, dx: -4, dy: 22 })
+  .link('off', 'p', 'region, filters,|selected incident', { off: -8, dx: -44, dy: -8 })
+  .link('p', 'off', 'map, ranked queue,|alerts, reports, CSV', { off: -8, dx: 44, dy: 18 })
+  .link('p', 'em', 'SOS request|(after confirmation)', { dx: 52, dy: -4 })
+  .out('Fig 3.1 — Level 0 DFD (Context Diagram) — FireWatch');
+</script>
+
+<div class="newpage"></div>
+<script>
+new Dia(680, 700)
+  .label(340, 18, 'Level 1 DFD - FireWatch', 'h')
+  .box('firms', 70, 70, 110, 40, 'NASA FIRMS', '#d9ead3')
+  .circ('p1', 240, 70, 42, '<tspan font-weight="700">1.0</tspan>|Acquire|Hotspots', '#cfe2f3')
+  .store('d1', 240, 165, 130, 'D1  Raw Hotspots')
+  .circ('p2', 440, 165, 48, '<tspan font-weight="700">2.0</tspan>|Enrich: Distance|& Recurrence', '#cfe2f3')
+  .box('osm', 610, 70, 120, 40, 'OpenStreetMap', '#d9ead3')
+  .circ('p3', 440, 285, 46, '<tspan font-weight="700">3.0</tspan>|Classify|(Rule Engine)', '#cfe2f3')
+  .store('d3', 420, 370, 180, 'D3  Classified Detections')
+  .box('svc', 170, 345, 120, 40, 'Map, Weather &|Routing Services', '#d9ead3')
+  .box('em', 615, 330, 110, 40, 'Emergency|Services', '#fce5cd')
+  .circ('p4', 110, 470, 46, '<tspan font-weight="700">4.0</tspan>|Map & Escalation|Queue', '#cfe2f3')
+  .circ('p5', 300, 480, 46, '<tspan font-weight="700">5.0</tspan>|Region Analysis|& Compare', '#cfe2f3')
+  .circ('p6', 560, 470, 46, '<tspan font-weight="700">6.0</tspan>|Respond, SOS|& Alerts', '#cfe2f3')
+  .store('d4', 590, 575, 150, 'D4  Alerts & SOS Log')
+  .circ('p7', 420, 625, 46, '<tspan font-weight="700">7.0</tspan>|Build Report|& Export', '#cfe2f3')
+  .box('off', 120, 640, 130, 44, 'District Safety|Officer', '#cfe2f3')
+  .link('firms', 'p1', 'hotspots', { dy: -9 })
+  .link('p1', 'd1', 'raw detections', { dx: 34 })
+  .link('d1', 'p2', 'de-duplicated|hotspots', { dy: -14 })
+  .link('osm', 'p2', 'industrial|polygons', { dx: 34, dy: -4 })
+  .link('p2', 'p3', 'enriched rows|(distance_km, days_seen)', { dx: 62 })
+  .link('p3', 'd3', 'classified|detections', { dx: 40 })
+  .link('d3', 'p4', 'detections', { dx: -42, dy: -16 })
+  .link('d3', 'p5', '', {})
+  .link('d3', 'p6', 'Critical / High|incidents', { dx: 40, dy: -6 })
+  .link('d3', 'p7', 'feed, queue', { dx: 32, dy: 30 })
+  .link('svc', 'p5', 'boundaries,|imagery', { dx: -30, dy: 6 })
+  .link('svc', 'p6', 'routes, weather', { dx: 96, dy: 30 })
+  .link('p6', 'em', 'SOS request', { dx: 36 })
+  .link('p6', 'd4', 'alerts, dispatches', { dx: 50 })
+  .link('d4', 'p7', 'alerts, dispatches', { dx: 6, dy: 14 })
+  .link('off', 'p4', 'filters', { off: -8, dx: -24 })
+  .link('p4', 'off', 'map, ranked|queue, CSV', { off: -8, dx: 36, dy: 4 })
+  .link('off', 'p5', 'region name', { dx: 20, dy: 10 })
+  .link('off', 'p6', 'selected incident', { dx: 70, dy: -26 })
+  .link('p7', 'off', 'report file|(PDF, Word, Excel...)', { dy: 18 })
+  .out('Fig 3.2 — Level 1 DFD — FireWatch');
+</script>
+
+<div class="newpage"></div>
+<script>
+(function () {
+  const d = new Dia(660, 520);
+  d.label(330, 18, 'Structured Chart - FireWatch', 'h');
+  d.box('m', 330, 62, 170, 42, 'FireWatch|Main Control', '#cfe2f3');
+  const cols = [
+    ['a', 115, 'Acquisition', ['Fetch FIRMS Hotspots', 'Fetch OSM Industrial Sites', 'De-duplicate Passes', 'Distance to Nearest Site', 'Count Recurrence', 'Write CSV Contract']],
+    ['r', 330, 'Rule Engine', ['Read & Normalise Feed', 'Proximity Rule (3 km)', 'Persistence Rule (3+ days)', 'Confidence Rule (85%+)', 'Assign Cause & Risk Tier', 'Detect Priority Trend']],
+    ['dl', 545, 'Delivery', ['Live Map & Filters', 'Escalation Queue', 'Region Analysis', 'Respond & SOS', 'Alert Centre', 'Report & Export']],
+  ];
+  cols.forEach(([id, x, t, kids]) => {
+    d.box(id, x, 150, 150, 36, t, '#d9ead3');
+    d.link('m', id, '');
+    const tx = x - 62;
+    kids.forEach((k, i) => {
+      const y = 215 + i * 50;
+      d.box(id + i, x + 14, y, 150, 30, k, '#fff');
+      d.path(`M${tx} ${y}H${x + 14 - 75}`, { arrow: true });
+    });
+    d.path(`M${tx} 168V${215 + (kids.length - 1) * 50}`);
+  });
+  d.out('Fig 3.3 — Structured Chart — FireWatch');
+})();
+</script>
+
+<h3>Application</h3>
+<p>The DFDs show how information flows through FireWatch from end to end. For example, a VIIRS hotspot is fetched from NASA FIRMS, de-duplicated, given its distance to the nearest OpenStreetMap industrial site and its recurrence count, classified by the three rules, stored as a classified detection, and then shown to the officer as a ranked row in the escalation queue. From there, the same row can feed a route, an SOS request or a report. The structured chart shows how this work is split into small modules that can be built and tested one at a time.</p>
+
+<div class="viva inline">VIVA-VOCE</div>
+<div class="vivafill"></div>
+
+<!-- EXPERIMENT 4: ER -->
+<div class="exp">EXPERIMENT – 4</div>
+<p class="aim"><b>AIM:</b> To design and represent the Entity Relationship (ER) Diagram for FireWatch.</p>
+<p><b>SOFTWARE USED:</b> Draw.io</p>
+<h2>THEORY</h2>
+<p>An Entity Relationship (ER) Diagram is a conceptual picture of the data a system keeps and how the pieces relate. The main entities in FireWatch are HOTSPOT, INDUSTRIAL_SITE, REGION, DETECTION, ALERT, SOS_DISPATCH, REPORT and OFFICER.</p>
+<ul>
+  <li><b>HOTSPOT:</b> one raw satellite detection from NASA FIRMS, with its position, acquisition date and time, sensor (VIIRS or MODIS) and confidence.</li>
+  <li><b>INDUSTRIAL_SITE:</b> an industrial land-use polygon from OpenStreetMap, with its OSM id and name.</li>
+  <li><b>REGION:</b> a state, district or city chosen by the officer, with its real boundary and the surrounding band used for analysis.</li>
+  <li><b>DETECTION:</b> a hotspot after enrichment and classification. It stores the distance to the nearest site, the number of days seen, the cause, the risk tier and the rule that fired. Each DETECTION comes from one HOTSPOT and points to its nearest INDUSTRIAL_SITE.</li>
+  <li><b>ALERT:</b> raised by the Alert centre for a Critical detection, a sustained-Critical site or a confirmed live pass, with the satellite pass time and when it was raised and updated.</li>
+  <li><b>SOS_DISPATCH:</b> a resource request drafted for one detection and sent by an officer through a chosen channel.</li>
+  <li><b>REPORT:</b> a situation report built by an officer, which includes many detections and is exported in one format.</li>
+  <li><b>OFFICER:</b> the user, with name, organisation and contact, stored in the browser.</li>
+</ul>
+
+<div class="newpage"></div>
+<script>
+new Dia(680, 560)
+  .label(340, 18, 'ER Diagram - FireWatch', 'h')
+  .ent('hot', 20, 40, 150, 'HOTSPOT', ['hotspot_id (PK)', 'lat, lon', 'acq_datetime', 'sensor (VIIRS/MODIS)', 'confidence', 'source'], '#f9cb9c')
+  .ent('reg', 265, 40, 150, 'REGION', ['region_id (PK)', 'name', 'type (state/district/city)', 'boundary (polygon)', 'band_km'], '#d9ead3')
+  .ent('site', 510, 40, 150, 'INDUSTRIAL_SITE', ['site_id (PK)', 'osm_id', 'name', 'polygon', 'landuse'], '#fff2cc')
+  .ent('det', 255, 230, 170, 'DETECTION', ['detection_id (PK)', 'hotspot_id (FK)', 'site_id (FK)', 'region_id (FK)', 'distance_km, days_seen', 'type (cause), risk_level', 'rule_fired, priority_trend'], '#cfe2f3')
+  .ent('alert', 510, 250, 150, 'ALERT', ['alert_id (PK)', 'detection_id (FK)', 'kind', 'pass_time', 'raised_at, updated_at'], '#ead1dc')
+  .ent('rep', 20, 250, 150, 'REPORT', ['report_id (PK)', 'officer_id (FK)', 'format', 'created_at'], '#d9d2e9')
+  .ent('off', 20, 445, 150, 'OFFICER', ['officer_id (PK)', 'name', 'organisation', 'contact'], '#cfe2f3')
+  .ent('sos', 510, 445, 150, 'SOS_DISPATCH', ['sos_id (PK)', 'detection_id (FK)', 'officer_id (FK)', 'channel, message', 'sent_at'], '#f4cccc')
+  .link('hot', 'det', '1..1', { dx: -14 })
+  .link('reg', 'det', '1..N', { dx: 14 })
+  .link('site', 'det', '1..N', { dx: 14 })
+  .link('det', 'alert', '1..N', { dy: -8 })
+  .link('rep', 'det', 'M..N', { dy: -8, plain: true })
+  .link('det', 'sos', '1..N', { dx: 14 })
+  .link('off', 'rep', '1..N', { dx: 16 })
+  .link('off', 'sos', '1..N', { dy: -8 })
+  .out('Fig 4.1 — ER Diagram — FireWatch');
+</script>
+
+<h2>Entity Relationship Table</h2>
+<table class="grid">
+<tr><th style="width:22%">Entity</th><th>Description</th><th style="width:32%">Relationships</th></tr>
+<tr><td>HOTSPOT</td><td>Raw thermal detection from NASA FIRMS.</td><td>Gives one DETECTION</td></tr>
+<tr><td>INDUSTRIAL_SITE</td><td>Industrial polygon from OpenStreetMap.</td><td>Nearest site of many DETECTIONs</td></tr>
+<tr><td>REGION</td><td>Named area with real boundary and analysis band.</td><td>Contains many DETECTIONs</td></tr>
+<tr><td>DETECTION</td><td>Enriched and classified hotspot with cause, risk tier and rule fired.</td><td>Belongs to one HOTSPOT, SITE and REGION; has many ALERTs and SOS_DISPATCHes; appears in many REPORTs</td></tr>
+<tr><td>ALERT</td><td>Alert raised for a Critical detection, sustained site or live pass.</td><td>Belongs to one DETECTION</td></tr>
+<tr><td>SOS_DISPATCH</td><td>Resource request sent for one incident.</td><td>Belongs to one DETECTION and one OFFICER</td></tr>
+<tr><td>REPORT</td><td>Situation report exported in one format.</td><td>Built by one OFFICER; includes many DETECTIONs</td></tr>
+<tr><td>OFFICER</td><td>User of the system, stored in the browser.</td><td>Builds many REPORTs; sends many SOS_DISPATCHes</td></tr>
+</table>
+
+<h2>Relationship Table</h2>
+<table class="grid">
+<tr><th>From Entity</th><th>To Entity</th><th>Cardinality</th><th>Relationship Description</th></tr>
+<tr><td>HOTSPOT</td><td>DETECTION</td><td>1 → 1</td><td>Each hotspot becomes exactly one detection after enrichment.</td></tr>
+<tr><td>INDUSTRIAL_SITE</td><td>DETECTION</td><td>1 → N</td><td>One site can be the nearest site of many detections.</td></tr>
+<tr><td>REGION</td><td>DETECTION</td><td>1 → N</td><td>One region contains many detections.</td></tr>
+<tr><td>DETECTION</td><td>ALERT</td><td>1 → N</td><td>One detection can raise many alerts over time.</td></tr>
+<tr><td>DETECTION</td><td>SOS_DISPATCH</td><td>1 → N</td><td>One incident can have many SOS requests.</td></tr>
+<tr><td>OFFICER</td><td>SOS_DISPATCH</td><td>1 → N</td><td>One officer can send many SOS requests.</td></tr>
+<tr><td>OFFICER</td><td>REPORT</td><td>1 → N</td><td>One officer can build many reports.</td></tr>
+<tr><td>REPORT</td><td>DETECTION</td><td>M → N</td><td>A report includes many detections; a detection can appear in many reports.</td></tr>
+</table>
+
+<h3>Application</h3>
+<p>The ER diagram shows how FireWatch's data fits together: a raw hotspot becomes a detection that is linked to its nearest industrial site and its region, and that detection then drives alerts, SOS requests and reports. This helps design a clear data model, so that the classified feed, the alert log and the reports are stored without duplication and can be traced back to the original satellite record.</p>
+
+<div class="viva inline">VIVA-VOCE</div>
+<div class="vivafill"></div>
+
+<!-- EXPERIMENT 5: Use case -->
+<div class="exp">EXPERIMENT – 5</div>
+<p class="aim"><b>AIM:</b> To study and design a UML Use Case Diagram for FireWatch.</p>
+<p><b>SOFTWARE USED:</b> Draw.io</p>
+<h2>THEORY</h2>
+<p>A Use Case Diagram is a UML diagram that shows the functional requirements of a system: the actors who interact with it, the main use cases, and the relationships between them. For FireWatch the main use cases are:</p>
+<ul>
+  <li><b>View Live Map</b> — see every detection as risk markers, clusters or a heat layer, with counts.</li>
+  <li><b>Filter Detections</b> — narrow the view by risk level, cause, minimum confidence and maximum distance to industry (extends View Live Map).</li>
+  <li><b>View Escalation Queue</b> — see Critical and High detections ranked by severity and confidence, with priority-trend sites on top.</li>
+  <li><b>Classify Detections</b> — the rule engine applies the proximity, persistence and confidence rules; included by View Live Map and View Escalation Queue.</li>
+  <li><b>Export CSV / Report</b> — download the queue for field teams, or a situation report in eight formats.</li>
+  <li><b>Analyse Region</b> — choose a state, district or city and see incidents inside it and in the surrounding band.</li>
+  <li><b>Compare Raw vs Screened</b> — view the raw FIRMS feed next to the screened feed.</li>
+  <li><b>View Satellite Evidence</b> — see dated NASA GIBS imagery of a hotspot (extends Analyse Region).</li>
+  <li><b>Route to Incident</b> — get a road route and arrival time to an incident, with live GPS follow.</li>
+  <li><b>Send SOS</b> — draft and send a resource request for one incident after confirmation; includes Find Nearby Services.</li>
+  <li><b>View Alerts</b> — open the Alert centre with pass times and timestamps.</li>
+  <li><b>Ask Therma</b> — ask the bilingual guide a question about the system.</li>
+</ul>
+<p>The actors are:</p>
+<ul>
+  <li><b>District Safety Officer</b> — the primary actor, who reviews the map and queue, analyses regions, exports reports and sends SOS requests.</li>
+  <li><b>Field Responder</b> — uses Route to Incident and the exported CSV in the field.</li>
+  <li><b>NASA FIRMS</b> — an external actor that provides hotspots to Classify Detections.</li>
+  <li><b>OpenStreetMap &amp; Map Services</b> — external actors that provide boundaries, industrial sites, nearby services, imagery and routes.</li>
+  <li><b>Emergency Services</b> — receive the SOS request.</li>
+</ul>
+<p>The diagram uses &lt;&lt;include&gt;&gt; for behaviour that always runs as part of another use case (for example, Send SOS always includes Find Nearby Services) and &lt;&lt;extend&gt;&gt; for optional behaviour (Filter Detections extends View Live Map).</p>
+
+<div class="newpage"></div>
+<script>
+new Dia(680, 600)
+  .label(340, 18, 'Use Case Diagram - FireWatch', 'h')
+  .frame(140, 34, 430, 556, 'FireWatch System')
+  .actor('off', 55, 260, 'District Safety|Officer')
+  .actor('fr', 55, 500, 'Field|Responder')
+  .actor('firms', 635, 120, 'NASA FIRMS')
+  .actor('osm', 635, 320, 'OpenStreetMap &|Map Services')
+  .actor('em', 635, 510, 'Emergency|Services')
+  .ell('u1', 270, 75, 80, 19, 'View Live Map')
+  .ell('u3', 270, 133, 80, 19, 'View Escalation Queue')
+  .ell('u5', 270, 191, 80, 19, 'Export CSV / Report')
+  .ell('u6', 270, 249, 80, 19, 'Analyse Region')
+  .ell('u7', 270, 307, 80, 19, 'Compare Raw vs Screened')
+  .ell('u9', 270, 365, 80, 19, 'Route to Incident')
+  .ell('u10', 270, 423, 80, 19, 'Send SOS')
+  .ell('u12', 270, 481, 80, 19, 'View Alerts')
+  .ell('u13', 270, 545, 80, 19, 'Ask Therma')
+  .ell('u2', 475, 62, 78, 19, 'Filter Detections')
+  .ell('u4', 475, 128, 78, 19, 'Classify Detections')
+  .ell('u8', 475, 196, 82, 19, 'View Satellite Evidence')
+  .ell('u11', 475, 410, 80, 19, 'Find Nearby Services')
+  .toLeft('off', 'u1').toLeft('off', 'u3').toLeft('off', 'u5')
+  .toLeft('off', 'u6').toLeft('off', 'u7').toLeft('off', 'u10')
+  .toLeft('off', 'u12').toLeft('off', 'u13')
+  .toLeft('fr', 'u9').toLeft('fr', 'u10').toLeft('fr', 'u12')
+  .link('u2', 'u1', '&lt;&lt;extend&gt;&gt;', { dash: true, dy: -8 })
+  .link('u1', 'u4', '&lt;&lt;include&gt;&gt;', { dash: true, dx: 4, dy: -9 })
+  .link('u3', 'u4', '&lt;&lt;include&gt;&gt;', { dash: true, dy: 9 })
+  .link('u8', 'u6', '&lt;&lt;extend&gt;&gt;', { dash: true, dx: 12, dy: 6 })
+  .link('u10', 'u11', '&lt;&lt;include&gt;&gt;', { dash: true, dy: -8 })
+  .link('u4', 'firms', '', { plain: true })
+  .link('u6', 'osm', '', { plain: true }).link('u8', 'osm', '', { plain: true })
+  .link('u9', 'osm', '', { plain: true }).link('u11', 'osm', '', { plain: true })
+  .link('u10', 'em', '', { plain: true })
+  .out('Fig 5.1 — Use Case Diagram — FireWatch');
+</script>
+
+<h3>Application</h3>
+<p>The use case diagram shows how a district safety officer and a field responder use FireWatch from end to end — reviewing the screened map and ranked queue, analysing their own region, checking satellite evidence, routing to an incident and sending an SOS request. It makes sure that the functional scope of the system matches the real workflow of a safety office that has to decide each morning which sites need a ground visit.</p>
+
+<div class="viva inline">VIVA-VOCE</div>

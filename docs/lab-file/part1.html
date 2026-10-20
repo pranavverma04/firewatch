@@ -1,0 +1,273 @@
+<!-- EXPERIMENT 1: Problem statement -->
+<div class="exp">EXPERIMENT – 1</div>
+<p class="aim"><b>AIM:</b> Write down the problem statement for a suggested system of relevance.</p>
+
+<h2>Problem Statement: FireWatch — Industrial Fire &amp; Persistent Thermal Source Intelligence</h2>
+<p>Satellites such as NASA's VIIRS and MODIS report thousands of thermal hotspots over India every night. A hotspot only says that a pixel was hot; it does not say why. In winter the same thermal signature comes from a paddy field being cleared and from a factory that has lost containment, and only the second one is an industrial emergency. District industrial-safety authorities and pollution control boards therefore receive a long, raw list of alerts and have to send field teams to check them one by one. In one season in Punjab, teams visited 40,557 satellite alert sites and found no fire at 17,832 of them. When close to half the trips are wasted, teams stop trusting the feed, and a real industrial fire can be missed in the noise. This project proposes FireWatch, a screening system that matches NASA FIRMS hotspots against mapped industrial sites from OpenStreetMap, tests each one for recurrence over several days, classifies its likely cause and risk with three written rules, and gives the officer a short, ranked worklist of the sites that need a ground visit.</p>
+
+<h3>Why This Problem Was Chosen</h3>
+<p>Industrial fires and persistent heat sources are a real safety and pollution problem, and the data needed to screen them is free and public: NASA FIRMS covers the whole globe and OpenStreetMap has industrial land-use polygons on every continent. The problem gives wide scope to apply software-engineering concepts together: data acquisition from external services, geospatial processing (distance to the nearest site), a rule engine, a web front end with live maps, an operator dashboard, report generation and export. FireWatch deliberately uses <b>rules, not a trained model</b>. An officer has to defend every verdict, so every threshold is visible and every row can be checked by hand. This makes the system easy to explain, test and evaluate in a lab setting, and it remains extendable (daily automatic downloads, a hosted dashboard, a pilot with a pollution control board).</p>
+
+<h3>Features Included in the Solution</h3>
+<h4>A. Data Acquisition Module</h4>
+<ul>
+  <li>Fetch thermal hotspots from NASA FIRMS (VIIRS and MODIS) with latitude, longitude, acquisition date and time, sensor and confidence</li>
+  <li>Fetch industrial sites (land-use = industrial polygons) from OpenStreetMap through the Overpass API</li>
+  <li>Remove duplicate detections of the same pixel from overlapping satellite passes</li>
+  <li>Compute the distance from every hotspot to the nearest mapped industrial site</li>
+  <li>Count recurrence: the number of separate days the same location returned a hotspot</li>
+  <li>Hand the enriched detections to the next stage as one CSV file with a fixed column contract</li>
+</ul>
+<h4>B. Rule Engine (Classification) Module</h4>
+<ul>
+  <li><b>Proximity rule:</b> the hotspot lies within 3 km of an industrial polygon</li>
+  <li><b>Persistence rule:</b> the location was seen on 3 or more separate days</li>
+  <li><b>Confidence rule:</b> sensor confidence of 85% or better for top priority (VIIRS low / nominal / high is read as 35% / 65% / 90%)</li>
+  <li>Assign each detection a cause: Industrial Fire, Agricultural Burning or Other/Natural</li>
+  <li>Assign each detection a risk tier: Critical, High, Medium or Low</li>
+  <li><b>Priority trend:</b> a site that has been Critical on 3 or more days and has come back on 5 or more is moved to the top automatically</li>
+  <li>Crop-residue burning is labelled, not deleted: it stays on the map as context and stays out of the queue</li>
+</ul>
+<h4>C. Website Module (11 pages)</h4>
+<ul>
+  <li><b>Dashboard:</b> world thermal-anomaly map with Map / Satellite switch, counts, and the "Sites requiring intervention" queue</li>
+  <li><b>Regions:</b> pick a state, district or city; FireWatch draws the real boundary and analyses every incident inside it and in a surrounding band</li>
+  <li><b>Compare:</b> raw NASA FIRMS feed next to the screened feed on two linked maps, with alerts received against alerts escalated</li>
+  <li><b>Thermal DNA:</b> for any point, a 10-year climate baseline, a 7-day fire fingerprint and what lies within 3 km</li>
+  <li><b>Respond:</b> road route from the officer's position to an incident with an arrival time, live GPS follow and hand-off to Google Maps, Apple Maps or Waze</li>
+  <li><b>Report:</b> builds a situation report and exports it as PDF, HTML, Word, Excel, CSV, JSON, Markdown or plain text, entirely in the browser</li>
+  <li>Home, Problem, How it decides, Architecture and FAQ pages explain the system and the three rules</li>
+</ul>
+<h4>D. Site-wide Tools</h4>
+<ul>
+  <li><b>Alert centre:</b> raises an alert for every Critical detection, every sustained-Critical site, every live VIIRS pass confirmed at a Critical or High site and every SOS dispatch</li>
+  <li><b>Emergency SOS:</b> drafts a structured resource request for one incident and lists the nearest fire stations, hospitals and police; the officer sends it by email, WhatsApp, SMS, webhook or call after a confirmation step</li>
+  <li><b>Satellite evidence viewer:</b> dated NASA GIBS imagery of any hotspot with date stepping and a before/after split</li>
+  <li><b>Therma:</b> a bilingual (English and Hindi), rule-based site guide that works without a network</li>
+</ul>
+<h4>E. Operator Dashboard (Streamlit)</h4>
+<ul>
+  <li>Five tabs: Live Map, Analytics, Priority Alerts, Impact &amp; Context, System Architecture</li>
+  <li>Filters for risk level, fire classification, minimum confidence and maximum distance to industry</li>
+  <li>CSV export of the current priority view for field teams</li>
+  <li>Live feed hot-swap: a new classified CSV placed beside the app is picked up on the next interaction, with no restart</li>
+  <li>Forgiving loader: column names are normalised and a broken file falls back to the sample data with the error shown</li>
+</ul>
+<h4>F. Non-Functional Requirements</h4>
+<ul>
+  <li><b>Explainability:</b> every verdict shows the satellite, the distance, the recurrence count and the rule that fired</li>
+  <li><b>No credentials:</b> all live services (FIRMS, GIBS, Open-Meteo, Nominatim, Overpass, OSRM) are keyless</li>
+  <li><b>Modularity:</b> one CSV contract between acquisition, rule engine and delivery, so any stage can be replaced alone</li>
+  <li><b>Privacy:</b> reports, alerts and SOS logs are built and stored in the user's browser; nothing is uploaded</li>
+  <li><b>Usability:</b> responsive layout for laptops and phones, dark and light themes</li>
+</ul>
+
+<h3>Application</h3>
+<p>FireWatch is useful to district industrial-safety authorities, who get a ranked morning list instead of a night of raw thermal points; to pollution control boards, who get persistent heat at a registered unit counted across passes with the history an inspection notice needs; and to plant operators, who can watch their own perimeter so that a flare or furnace running past its window is caught early. Because FIRMS and OpenStreetMap are global, the same rules work in any country.</p>
+
+<div class="viva inline">VIVA-VOCE</div>
+<div class="vivafill"></div>
+
+<!-- EXPERIMENT 2: SRS -->
+<div class="exp">EXPERIMENT – 2</div>
+<p class="aim"><b>AIM:</b> To prepare the Software Requirements Specification (SRS) for the suggested system, following IEEE Std 830-1998.</p>
+
+<div class="title-page" style="padding-top:70pt">
+  <div class="t1">Software Requirements Specification</div>
+  <div class="t2">for</div>
+  <div class="t3">FireWatch — Industrial Fire &amp;<br>Persistent Thermal Source Intelligence</div>
+  <div class="t4">Version 1.0</div>
+  <div class="t4">Prepared in accordance with IEEE Std 830-1998</div>
+  <div class="t4">(IEEE Recommended Practice for Software Requirements Specifications)</div>
+  <div class="t4" style="margin-top:26pt"><b>Prepared by:</b> Pranav Verma</div>
+  <div class="t4"><b>Date:</b> 20 October 2026</div>
+</div>
+
+<div class="newpage"></div>
+<h2>Table of Contents</h2>
+<table class="toc">
+<tr><td class="l">1. Introduction</td><td class="n">1</td></tr>
+<tr class="sub"><td class="l">1.1 Purpose</td><td class="n">1</td></tr>
+<tr class="sub"><td class="l">1.2 Document Conventions</td><td class="n">1</td></tr>
+<tr class="sub"><td class="l">1.3 Intended Audience and Reading Suggestions</td><td class="n">1</td></tr>
+<tr class="sub"><td class="l">1.4 Product Scope</td><td class="n">1</td></tr>
+<tr class="sub"><td class="l">1.5 References</td><td class="n">1</td></tr>
+<tr><td class="l">2. Overall Description</td><td class="n">2</td></tr>
+<tr class="sub"><td class="l">2.1 Product Perspective</td><td class="n">2</td></tr>
+<tr class="sub"><td class="l">2.2 Product Functions</td><td class="n">2</td></tr>
+<tr class="sub"><td class="l">2.3 User Classes and Characteristics</td><td class="n">2</td></tr>
+<tr class="sub"><td class="l">2.4 Operating Environment</td><td class="n">3</td></tr>
+<tr class="sub"><td class="l">2.5 Design and Implementation Constraints</td><td class="n">3</td></tr>
+<tr class="sub"><td class="l">2.6 User Documentation</td><td class="n">3</td></tr>
+<tr class="sub"><td class="l">2.7 Assumptions and Dependencies</td><td class="n">3</td></tr>
+<tr><td class="l">3. External Interface Requirements</td><td class="n">4</td></tr>
+<tr class="sub"><td class="l">3.1 User Interfaces</td><td class="n">4</td></tr>
+<tr class="sub"><td class="l">3.2 Hardware Interfaces</td><td class="n">4</td></tr>
+<tr class="sub"><td class="l">3.3 Software Interfaces</td><td class="n">4</td></tr>
+<tr class="sub"><td class="l">3.4 Communications Interfaces</td><td class="n">4</td></tr>
+<tr><td class="l">4. System Features</td><td class="n">5</td></tr>
+<tr class="sub"><td class="l">4.1 Hotspot Acquisition and Enrichment</td><td class="n">5</td></tr>
+<tr class="sub"><td class="l">4.2 Rule-Based Classification</td><td class="n">5</td></tr>
+<tr class="sub"><td class="l">4.3 Live Map and Escalation Queue</td><td class="n">5</td></tr>
+<tr class="sub"><td class="l">4.4 Region Analysis and Compare</td><td class="n">6</td></tr>
+<tr class="sub"><td class="l">4.5 Respond, SOS and Alert Centre</td><td class="n">6</td></tr>
+<tr class="sub"><td class="l">4.6 Report Builder and Export</td><td class="n">6</td></tr>
+<tr><td class="l">5. Other Nonfunctional Requirements</td><td class="n">7</td></tr>
+<tr class="sub"><td class="l">5.1 Performance Requirements</td><td class="n">7</td></tr>
+<tr class="sub"><td class="l">5.2 Safety Requirements</td><td class="n">7</td></tr>
+<tr class="sub"><td class="l">5.3 Security Requirements</td><td class="n">7</td></tr>
+<tr class="sub"><td class="l">5.4 Software Quality Attributes</td><td class="n">7</td></tr>
+<tr class="sub"><td class="l">5.5 Business Rules</td><td class="n">8</td></tr>
+<tr><td class="l">6. Other Requirements</td><td class="n">8</td></tr>
+<tr class="sub"><td class="l">6.1 Data Constraints</td><td class="n">8</td></tr>
+<tr class="sub"><td class="l">6.2 Legal and Compliance</td><td class="n">8</td></tr>
+<tr><td class="l">Appendix A: Glossary</td><td class="n">8</td></tr>
+<tr><td class="l">Appendix B: Analysis Models</td><td class="n">9</td></tr>
+<tr><td class="l">Appendix C: To Be Determined List</td><td class="n">9</td></tr>
+</table>
+
+<div class="newpage"></div>
+<h2>1. Introduction</h2>
+<h3>1.1 Purpose</h3>
+<p>This document specifies the software requirements for FireWatch Release 1.0, a screening system that matches NASA FIRMS satellite thermal hotspots to mapped industrial sites, tests them for recurrence, and gives district safety authorities a short, ranked list of sites that need a ground visit. It is the reference for the scope, features and constraints of the website and the operator dashboard.</p>
+<h3>1.2 Document Conventions</h3>
+<p>Requirements are grouped by system feature. The keywords MUST and SHOULD separate mandatory requirements from desirable ones. Column names of the detection feed are written in lower_snake_case (for example <span class="mono">risk_level</span>, <span class="mono">days_seen</span>) to match the CSV contract.</p>
+<h3>1.3 Intended Audience and Reading Suggestions</h3>
+<p>This SRS is meant for the student developers who build the system and for the evaluators who assess it. Readers who only want the functional scope should read Section 4 (System Features). Readers interested in the design should also read Section 2 and Appendix B.</p>
+<h3>1.4 Product Scope</h3>
+<p>FireWatch takes raw thermal hotspots from NASA FIRMS (VIIRS and MODIS) and industrial land-use polygons from OpenStreetMap, computes the distance from each hotspot to the nearest site and the number of days it recurred, and applies three written rules (proximity within 3 km, persistence on 3 or more days, confidence of 85% or more) to give each detection a cause and a risk tier. Critical and High detections form the escalation queue. The product goal is fewer wasted field visits and faster attention to persistent industrial heat, with every verdict explainable by hand. FireWatch does not add alerts; it removes the ones that waste a team's time.</p>
+<h3>1.5 References</h3>
+<ul>
+  <li>IEEE Std 830-1998, IEEE Recommended Practice for Software Requirements Specifications</li>
+  <li>NASA FIRMS (Fire Information for Resource Management System) documentation for VIIRS and MODIS active fire products</li>
+  <li>OpenStreetMap wiki: <span class="mono">landuse=industrial</span> and the Overpass API</li>
+  <li>NASA GIBS / Worldview imagery documentation; Open-Meteo API documentation</li>
+  <li>Punjab Remote Sensing Centre field-verification figures, as reported by The Tribune</li>
+</ul>
+
+<h2>2. Overall Description</h2>
+<h3>2.1 Product Perspective</h3>
+<p>FireWatch is a new, self-contained product made of three stages joined by one CSV contract: an <b>acquisition</b> stage (NASA FIRMS and OpenStreetMap data, de-duplication, distance and recurrence), a <b>rule engine</b> (cause and risk tier), and a <b>delivery</b> stage. Delivery has two front ends: an 11-page static website (plain HTML, CSS and JavaScript, no build step) and an operator dashboard written in Python with Streamlit. It depends on keyless public services: NASA FIRMS, NASA GIBS, OpenStreetMap Nominatim and Overpass, Open-Meteo, OSRM / Valhalla routing and Esri basemaps.</p>
+<h3>2.2 Product Functions</h3>
+<ul>
+  <li>Acquire thermal hotspots and industrial sites, and enrich each hotspot with distance and recurrence</li>
+  <li>Classify each detection by cause and risk tier using three written rules</li>
+  <li>Show all detections on a live map and the Critical / High ones in a ranked escalation queue</li>
+  <li>Analyse any state, district or city with its real boundary and a surrounding band</li>
+  <li>Compare the raw feed with the screened feed</li>
+  <li>Route a responder to an incident and draft an SOS resource request</li>
+  <li>Raise and keep alerts for Critical detections, sustained sites and SOS dispatches</li>
+  <li>Build a situation report and export it in eight formats; export the queue as CSV</li>
+</ul>
+<h3>2.3 User Classes and Characteristics</h3>
+<p>The primary user is a <b>district industrial-safety officer</b> who reviews the morning worklist and decides which sites get a field visit. This user knows the district but is not expected to know remote sensing. Secondary users are <b>field responders</b>, who use the Respond page and the CSV export, <b>pollution control board inspectors</b>, who use the history of a site, and <b>plant operators</b>, who watch their own perimeter.</p>
+<h3>2.4 Operating Environment</h3>
+<p>The website runs in any modern browser (Chrome, Edge, Firefox, Safari) on laptops and phones and is served by any static HTTP server. The dashboard needs Python 3.9 or later with streamlit, folium, streamlit-folium, pandas, numpy and plotly, and runs at <span class="mono">localhost:8501</span> or on the local network.</p>
+<h3>2.5 Design and Implementation Constraints</h3>
+<ul>
+  <li>Classification MUST use written rules with visible thresholds; no trained or black-box model</li>
+  <li>The stages MUST exchange data only through the CSV contract (<span class="mono">lat, lon, type, risk_level, confidence, distance_km, days_seen, detected_on, state, source</span>)</li>
+  <li>The website MUST work without a build step and without any API key</li>
+  <li>The site MUST be served over <span class="mono">http://</span>, because the hero video and live services do not work from <span class="mono">file://</span></li>
+</ul>
+<h3>2.6 User Documentation</h3>
+<p>A README covers setup, the feed format and how to run both front ends. Inside the product, the How it decides page walks through the three rules on a real record, the FAQ answers common questions, and Therma, the bilingual guide, answers questions on every page.</p>
+<h3>2.7 Assumptions and Dependencies</h3>
+<ul>
+  <li>The public services listed in 2.1 are reachable and within their fair-use limits</li>
+  <li>OpenStreetMap industrial polygons are reasonably complete for the area being screened</li>
+  <li>The sample feed shipped with Release 1.0 uses real geography with synthetic readings; a live feed replaces it by placing a classified CSV beside the dashboard</li>
+</ul>
+
+<h2>3. External Interface Requirements</h2>
+<h3>3.1 User Interfaces</h3>
+<p>The website has a top navigation bar to its 11 pages and floating buttons for the Alert centre, SOS and Therma on every page. The Dashboard page shows a full-width map with a side queue. The Streamlit dashboard has KPI tiles, five tabs and a collapsible Filters panel. Both support dark and light themes and reflow for phone screens.</p>
+<h3>3.2 Hardware Interfaces</h3>
+<p>No special hardware. The Respond page uses the device's GPS through the browser Geolocation API when the user allows it.</p>
+<h3>3.3 Software Interfaces</h3>
+<ul>
+  <li>NASA FIRMS VIIRS feed (through the Esri / NASA Living Atlas service) — live hotspots</li>
+  <li>NASA GIBS — dated satellite imagery tiles for the evidence viewer</li>
+  <li>OpenStreetMap Nominatim (place search and boundaries) and Overpass (industrial sites, fire stations, hospitals, police)</li>
+  <li>Open-Meteo — current weather and a 10-year climate baseline</li>
+  <li>OSRM and Valhalla — road routing for the Respond page</li>
+  <li>Python libraries: pandas and numpy (data), folium (maps), plotly (charts), streamlit (dashboard)</li>
+</ul>
+<h3>3.4 Communications Interfaces</h3>
+<p>All external calls are HTTPS GET requests made from the browser or the dashboard. The SOS feature sends nothing by itself: it opens the user's own email, WhatsApp, SMS or phone app, or posts to a webhook the user has entered, only after a confirmation step.</p>
+
+<h2>4. System Features</h2>
+<h3>4.1 Hotspot Acquisition and Enrichment</h3>
+<p><b>Description:</b> Hotspots are read from NASA FIRMS and industrial polygons from OpenStreetMap. Duplicate pixels from overlapping passes are removed; each hotspot gets <span class="mono">distance_km</span> to the nearest site and <span class="mono">days_seen</span>. <b>Priority:</b> High. <b>Stimulus/Response:</b> a new FIRMS download → an enriched detection file in the CSV contract.</p>
+<h3>4.2 Rule-Based Classification</h3>
+<p><b>Description:</b> Each detection is given a cause (Industrial Fire, Agricultural Burning, Other/Natural) and a risk tier (Critical, High, Medium, Low) from the proximity, persistence and confidence rules. A site Critical on 3 or more days and back on 5 or more is flagged as a priority trend. <b>Priority:</b> High. <b>Stimulus/Response:</b> enriched detections → classified detections with the rule that fired.</p>
+<h3>4.3 Live Map and Escalation Queue</h3>
+<p><b>Description:</b> Every detection is drawn on a map as risk markers, clusters or a heat layer. The queue lists Critical and High detections ordered by severity and then confidence, and can be exported as CSV. <b>Priority:</b> High. <b>Stimulus/Response:</b> the officer opens the dashboard or changes a filter → map, counts and queue update.</p>
+<h3>4.4 Region Analysis and Compare</h3>
+<p><b>Description:</b> The officer picks a named area; FireWatch draws its real boundary, analyses incidents inside it and in a band of 30% of its width (at least 50 km), and adds live satellite passes. Compare shows the raw and screened feeds on two linked maps. <b>Priority:</b> Medium. <b>Stimulus/Response:</b> a region name → boundary, counts and the incidents to act on.</p>
+<h3>4.5 Respond, SOS and Alert Centre</h3>
+<p><b>Description:</b> Respond builds a road route from the user's position to an incident with an arrival time adjusted for the hour's traffic and the weather, and re-routes if the user leaves the line by more than 80 m. SOS drafts a resource request and lists the nearest emergency services. The Alert centre raises and stores alerts with satellite pass times. <b>Priority:</b> Medium. <b>Stimulus/Response:</b> the officer selects an incident → route, SOS draft or alert entry.</p>
+<h3>4.6 Report Builder and Export</h3>
+<p><b>Description:</b> Builds a situation report with the feed, priority list, regions, alerts, dispatches, timestamps and rules, and exports it as PDF, HTML, Word, Excel, CSV, JSON, Markdown or text in the browser. <b>Priority:</b> Medium. <b>Stimulus/Response:</b> the officer chooses a format → a downloaded file.</p>
+
+<h2>5. Other Nonfunctional Requirements</h2>
+<h3>5.1 Performance Requirements</h3>
+<ul>
+  <li>The dashboard SHOULD redraw map, counts and queue within 2 seconds of a filter change for a feed of a few thousand rows</li>
+  <li>A new feed file MUST be picked up on the next interaction, without restarting the dashboard</li>
+  <li>Each website page SHOULD be usable before the live services respond, showing the sample feed first</li>
+</ul>
+<h3>5.2 Safety Requirements</h3>
+<ul>
+  <li>Crop-residue burning MUST stay visible on the map, so that no detection silently disappears</li>
+  <li>An SOS MUST NOT leave the device without an explicit confirmation by the user</li>
+  <li>The system MUST state that SOS does not connect to official control rooms</li>
+</ul>
+<h3>5.3 Security Requirements</h3>
+<ul>
+  <li>No API keys or credentials are stored or needed</li>
+  <li>Reports, alerts, SOS logs and operator details stay in the browser's local storage and are never uploaded</li>
+</ul>
+<h3>5.4 Software Quality Attributes</h3>
+<ul>
+  <li><b>Explainability:</b> every row MUST show the satellite, distance, recurrence count and rule that fired</li>
+  <li><b>Determinism:</b> the same feed MUST always give the same classification</li>
+  <li><b>Robustness:</b> the loader MUST normalise column names, fill missing optional fields, and fall back to sample data on a broken file</li>
+  <li><b>Maintainability:</b> acquisition, rule engine and delivery are separate modules joined only by the CSV contract</li>
+</ul>
+<h3>5.5 Business Rules</h3>
+<ul>
+  <li>Only Critical and High detections enter the escalation queue</li>
+  <li>The recommended action for a queued site is ground verification by the district industrial-safety authority within 24 hours</li>
+  <li>VIIRS confidence values low / nominal / high MUST be mapped to 35% / 65% / 90%</li>
+</ul>
+
+<h2>6. Other Requirements</h2>
+<h3>6.1 Data Constraints</h3>
+<p>Latitude and longitude are required and are in WGS 84 decimal degrees. Confidence is 0–100 or the FIRMS letters l / n / h. Optional columns (<span class="mono">distance_km, days_seen, detected_on, state, source</span>) may be missing and are filled with defaults.</p>
+<h3>6.2 Legal and Compliance</h3>
+<p>FireWatch uses only public data. NASA imagery is public domain; OpenStreetMap data is used under the ODbL with attribution; Esri basemaps are shown with their attribution. Field-verification figures are credited to their source.</p>
+
+<h2>Appendix A: Glossary</h2>
+<ul>
+  <li><b>FIRMS</b> — NASA's Fire Information for Resource Management System, which publishes active fire hotspots</li>
+  <li><b>VIIRS / MODIS</b> — satellite sensors that detect thermal anomalies (375 m and 1 km pixels)</li>
+  <li><b>Hotspot</b> — one satellite pixel flagged as hotter than its surroundings</li>
+  <li><b>Recurrence (days_seen)</b> — number of separate days a location returned a hotspot</li>
+  <li><b>Escalation queue</b> — the ranked list of Critical and High detections</li>
+  <li><b>GIBS</b> — NASA Global Imagery Browse Services, the tiles behind NASA Worldview</li>
+</ul>
+<h2>Appendix B: Analysis Models</h2>
+<p>See Experiment 3 (Data Flow Diagrams and Structured Chart), Experiment 4 (Entity Relationship Diagram) and Experiment 5 (Use Case Diagram) in this lab file for the analysis models.</p>
+<h2>Appendix C: To Be Determined List</h2>
+<ul>
+  <li>TBD-1: Automatic daily download of new FIRMS hotspot data</li>
+  <li>TBD-2: Hosting the dashboard online with a public link</li>
+  <li>TBD-3: Official integration with a fire or pollution control room for SOS</li>
+  <li>TBD-4: A pilot with one pollution control board or fire office</li>
+</ul>
+<h3>Application</h3>
+<p>This SRS gives the developers and evaluators one clear reference for what FireWatch must do and the limits it must respect — for example, that classification must use visible rules and that no SOS may leave without confirmation — so that design decisions can be checked against an agreed specification.</p>
+
+<div class="viva inline">VIVA-VOCE</div>
+<div class="vivafill"></div>
