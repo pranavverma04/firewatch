@@ -53,7 +53,7 @@
   function pooled(fn) {
     return new Promise(function (res, rej) {
       function run() { active++; fn().then(res, rej).finally(function () { active--; if (waiting.length) waiting.shift()(); }); }
-      if (active < 6) run(); else waiting.push(run);
+      if (active < 10) run(); else waiting.push(run);
     });
   }
   function hav(a, b, c, d) {
@@ -124,6 +124,27 @@
         if (r < 150 || bl > 140) continue; /* fire products are drawn in yellow to red only */
         out.push({ lat: b[3] - (y + 0.5) * dy, lon: b[0] + (x + 0.5) * dx, cls: gg > 170 ? 'possible' : 'fire', a: d[i + 3] });
       }
+      return out;
+    });
+  }
+  /* Shared frames. A frame is fetched once per (layer, time, tile) and every point inside reads from it,
+     so twelve queue items over India cost one image per time step, not twelve. */
+  var tileCache = {}, tileKeys = [];
+  function tileHits(layer, time, b, size, deg) {
+    var out = [], jobs = [];
+    for (var x = Math.floor(b[0] / size) * size; x < b[2]; x += size) for (var y = Math.floor(b[1] / size) * size; y < b[3]; y += size) {
+      var tb = [x, Math.max(-85, y), x + size, Math.min(85, y + size)];
+      if (tb[1] >= tb[3]) continue;
+      var k = layer + '|' + time + '|' + x + ',' + y + '|' + deg;
+      if (!tileCache[k]) {
+        tileCache[k] = rasterHits(layer, tb, time, deg); tileKeys.push(k);
+        (function (kk) { tileCache[kk].catch(function () { delete tileCache[kk]; }); })(k);
+        if (tileKeys.length > 400) delete tileCache[tileKeys.shift()];
+      }
+      jobs.push(tileCache[k]);
+    }
+    return Promise.all(jobs).then(function (lists) {
+      lists.forEach(function (l) { l.forEach(function (q) { if (q.lon >= b[0] && q.lon <= b[2] && q.lat >= b[1] && q.lat <= b[3]) out.push(q); }); });
       return out;
     });
   }
@@ -228,14 +249,14 @@
         if (!newest || !geoCovers(src, lat, lon)) { jobs[id] = Promise.resolve({ na: true }); return; }
         var slots = geoSlots(src, newest, hoursGeo);
         jobs[id] = Promise.all(slots.map(function (t) {
-          return rasterHits(src.layer, gb, t, 0.02).then(function (h) { return { t: t, ok: true, hits: h.filter(function (q) { return hav(lat, lon, q.lat, q.lon) <= 5; }) }; }).catch(function () { return { t: t, ok: false, hits: [] }; });
+          return tileHits(src.layer, t, gb, 30, 0.03).then(function (h) { return { t: t, ok: true, hits: h.filter(function (q) { return hav(lat, lon, q.lat, q.lon) <= 6; }) }; }).catch(function () { return { t: t, ok: false, hits: [] }; });
         })).then(function (r) { return { slots: r, newest: newest }; });
       });
       /* Sentinel-3: one global granule per orbit, about 100 minutes apart. Walk back twelve hours on each. */
       var s3times = [];
-      BY.s3.layers.forEach(function (ly) { var n0 = times[ly]; if (!n0) return; for (var k = 0; k < 7; k++) s3times.push({ ly: ly, t: n0 - k * 100 * MIN }); });
+      BY.s3.layers.forEach(function (ly) { var n0 = times[ly]; if (!n0) return; for (var k = 0; k < (opts.s3Orbits || 6); k++) s3times.push({ ly: ly, t: n0 - k * 100 * MIN }); });
       jobs.s3 = s3times.length ? Promise.all(s3times.map(function (o) {
-        return rasterHits(o.ly, box(lat, lon, 4), o.t, 0.01).then(function (h) { return { t: o.t, ly: o.ly, ok: true, hits: h.filter(function (q) { return hav(lat, lon, q.lat, q.lon) <= 2.5; }) }; }).catch(function () { return { t: o.t, ok: false, hits: [] }; });
+        return tileHits(o.ly, o.t, box(lat, lon, 4), 20, 0.02).then(function (h) { return { t: o.t, ly: o.ly, ok: true, hits: h.filter(function (q) { return hav(lat, lon, q.lat, q.lon) <= 3; }) }; }).catch(function () { return { t: o.t, ok: false, hits: [] }; });
       })).then(function (r) { return { granules: r }; }) : Promise.resolve({ na: true });
       var names = Object.keys(jobs);
       return Promise.all(names.map(function (k) { return jobs[k]; })).then(function (vals) {
@@ -277,8 +298,8 @@
       var g = R.s3.granules, gOk = g.filter(function (x) { return x.ok; }), gHit = gOk.filter(function (x) { return x.hits.length; });
       gHit.forEach(function (x) { hitAt('s3', x.t); });
       if (!gOk.length) add({ id: 's3', name: 'Sentinel-3 SLSTR', state: 'na', text: 'Granules did not load.', lr: 1 });
-      else if (gHit.length) { sensorsHit.s3 = 1; fams.SLSTR = 1; add({ id: 's3', name: 'Sentinel-3 SLSTR', state: 'yes', text: 'Fire radiative power pixel within 2.5 km on ' + gHit.length + ' of ' + gOk.length + ' orbits in the last 12 hours.', lr: BY.s3.lr }); }
-      else add({ id: 's3', name: 'Sentinel-3 SLSTR', state: 'no', text: 'No FRP pixel on ' + gOk.length + ' orbits in the last 12 hours (most orbits miss a given point).', lr: 1 });
+      else if (gHit.length) { sensorsHit.s3 = 1; fams.SLSTR = 1; add({ id: 's3', name: 'Sentinel-3 SLSTR', state: 'yes', text: 'Fire radiative power pixel within 3 km on ' + gHit.length + ' of ' + gOk.length + ' orbits in the last 12 hours.', lr: BY.s3.lr }); }
+      else add({ id: 's3', name: 'Sentinel-3 SLSTR', state: 'no', text: 'No FRP pixel on ' + gOk.length + ' orbits in the last ' + Math.round(gOk.length / 2 * 100 / 60) + ' hours (most orbits miss a given point).', lr: 1 });
     }
 
     /* 7-8. Geostationary: the satellites that never look away */
@@ -294,7 +315,7 @@
         var anyFire = hit.some(function (s) { return s.hits.some(function (q) { return q.cls === 'fire'; }); });
         var lr = (anyFire ? src.lr.fire : src.lr.possible) * (hit.length >= 3 ? 1.5 : 1);
         sensorsHit[id] = 1; fams[src.inst] = 1;
-        add({ id: id, name: src.name + ' ' + src.inst, state: 'yes', text: (anyFire ? 'Fire' : 'Possible fire') + ' flagged within 5 km in ' + hit.length + ' of ' + ok.length + ' images, newest ' + ago(now - hit[0].t) + ' ago' + (hit.length >= 3 ? '. Holding over time.' : '.'), lr: lr });
+        add({ id: id, name: src.name + ' ' + src.inst, state: 'yes', text: (anyFire ? 'Fire' : 'Possible fire') + ' flagged within 6 km in ' + hit.length + ' of ' + ok.length + ' images, newest ' + ago(now - hit[0].t) + ' ago' + (hit.length >= 3 ? '. Holding over time.' : '.'), lr: lr });
       } else if (cloudy) {
         add({ id: id, name: src.name + ' ' + src.inst, state: 'cloud', text: 'Nothing flagged in ' + ok.length + ' images, but cloud covers the point. Under cloud, silence is not evidence.', lr: 1 });
       } else {
@@ -341,7 +362,7 @@
   /* ------------------------------------------------------------------ */
   function batch(points, opts) {
     return Promise.all(points.map(function (pt) {
-      return check(pt.lat, pt.lon, { conf: pt.conf, dist: pt.dist, days: pt.days, hoursGeo: (opts && opts.hoursGeo) || 2 }).catch(function () { return null; });
+      return check(pt.lat, pt.lon, { conf: pt.conf, dist: pt.dist, days: pt.days, hoursGeo: (opts && opts.hoursGeo) || 2, s3Orbits: 4 }).catch(function () { return null; });
     }));
   }
 
@@ -356,7 +377,10 @@
     info: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     na: '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2.2"/></svg>'
   };
-  function renderResult(r) {
+  /* Demo records carry illustrative coordinates, so the live sky there says nothing about the record */
+  function isDemo(id) { return /^FW-\d{4}$/.test(String(id || '')); }
+  var DEMO_NOTE = '<p class="sx-demo small"><b>Demo record.</b> Its coordinates are illustrative, so this reads the real sky at that spot today. The result is shown for reference and does not change the record\'s score. On live detections it does.</p>';
+  function renderResult(r, opt) {
     var lanes = SOURCES.map(function (s) {
       var hits = r.lanes[s.id] || [], span = 24 * HOUR;
       var dots = hits.filter(function (t) { return r.at - t <= span; }).map(function (t) { return '<i style="left:' + (100 - (r.at - t) / span * 100).toFixed(2) + '%;--c:' + s.color + '" title="' + esc(s.name + ' ' + s.inst + ', ' + stamp(t)) + '"></i>'; }).join('');
@@ -368,7 +392,7 @@
     }).join('');
     var fresh = r.newestHit ? 'Newest heat seen ' + ago(r.at - r.newestHit.t) + ' ago by ' + (BY[r.newestHit.id] ? BY[r.newestHit.id].name + ' ' + BY[r.newestHit.id].inst : r.newestHit.id) : 'No sensor has seen heat here recently';
     var look = r.newestLook ? '. Newest geostationary look ' + ago(r.at - r.newestLook.t) + ' ago.' : '.';
-    return '<div class="sx-head" style="--tc:' + r.tone + '">' +
+    return (opt && opt.demo ? DEMO_NOTE : '') + '<div class="sx-head" style="--tc:' + r.tone + '">' +
       '<div class="sx-gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" class="trk"/><circle cx="60" cy="60" r="50" class="val" style="stroke-dasharray:' + (r.p * 314.16).toFixed(1) + ' 314.16"/></svg><div><b class="mono">' + r.pct + '%</b><span>evidence-weighted</span></div></div>' +
       '<div class="sx-sum"><span class="tag" style="--tc:' + r.tone + '">' + r.label + '</span><h4>' + (r.sensors ? r.sensors + ' of 8 satellites agree' : 'No satellite agrees yet') + (r.families > 1 ? ', ' + r.families + ' instrument types' : '') + '</h4><p>' + esc(fresh + look) + (r.cloudy ? ' Cloud is over the point, so missing looks are not held against it.' : '') + '</p></div></div>' +
       '<div class="sx-lanes"><div class="sx-lanes-h mono"><span>Last 24 hours</span><span>now</span></div>' + lanes + '</div>' +
@@ -394,7 +418,7 @@
     function run(force) {
       if (force) delete checkCache[rec.lat.toFixed(3) + ',' + rec.lon.toFixed(3)];
       body.innerHTML = loading();
-      check(rec.lat, rec.lon, { conf: rec.conf, dist: rec.dist, days: rec.days }).then(function (r) { body.innerHTML = renderResult(r); if (rec.onResult) rec.onResult(r); })
+      check(rec.lat, rec.lon, { conf: rec.conf, dist: rec.dist, days: rec.days }).then(function (r) { body.innerHTML = renderResult(r, { demo: isDemo(rec.id) }); if (rec.onResult) rec.onResult(r); })
         .catch(function (e) { body.innerHTML = '<p class="small">The check could not finish (' + esc(e && e.message || 'no response') + '). Try again in a moment.</p>'; });
     }
     $('#sx-again', dlg).onclick = function () { run(true); };
@@ -444,5 +468,5 @@
     return g;
   }
 
-  window.FW_SAT = { SOURCES: SOURCES, BY: BY, freshness: freshness, check: check, batch: batch, openCheck: openCheck, render: renderResult, loading: loading, wms: wmsLayer, polarLayer: polarLayer, eumTimes: eumTimes, viirsIn: viirsIn, modisIn: modisIn, rasterHits: rasterHits, geoCovers: geoCovers, ago: ago, stamp: stamp, PRIOR: PRIOR };
+  window.FW_SAT = { SOURCES: SOURCES, BY: BY, freshness: freshness, check: check, batch: batch, openCheck: openCheck, render: renderResult, isDemo: isDemo, loading: loading, wms: wmsLayer, polarLayer: polarLayer, eumTimes: eumTimes, viirsIn: viirsIn, modisIn: modisIn, rasterHits: rasterHits, geoCovers: geoCovers, ago: ago, stamp: stamp, PRIOR: PRIOR };
 })();

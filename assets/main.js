@@ -445,7 +445,9 @@
       var score = (x.risk === 'Critical' ? 40 : x.risk === 'High' ? 25 : x.risk === 'Medium' ? 8 : 0) + Math.min(x.days, 10) * 4 + (streak >= 5 ? 15 : streak >= 3 ? 10 : 0) + (x.conf >= 85 ? 5 : 0);
       if (x.live) { if (x.live.days >= 3) score += 10; else if (x.live.days >= 1) score += 4; if (x.live.n >= 2 && x.live.night / x.live.n >= 0.4) score += 5; }
       /* Multi-satellite check: agreement across independent sensors lifts a site, a clear-sky silence lowers it */
-      if (x.multi) { if (x.multi.p >= 0.85) score += 6; else if (x.multi.p >= 0.6) score += 3; else if (x.multi.p < 0.35) score -= 6; }
+      /* Demo records (FW-0001...) have illustrative coordinates: their live-sky reading is shown, never scored */
+      var demo = /^FW-\d{4}$/.test(x.id);
+      if (x.multi && !demo) { if (x.multi.p >= 0.85) score += 6; else if (x.multi.p >= 0.6) score += 3; else if (x.multi.p < 0.35) score -= 6; }
       score = Math.max(0, Math.min(100, score));
       var trend = x.risk === 'Critical' && crit >= 4 ? 'sustained' : x.risk === 'Critical' && crit >= 1 ? 'rising' : (x.risk === 'High' && streak >= 3) ? 'holding' : (x.risk === 'High' || x.risk === 'Critical') ? 'emerging' : 'steady';
       var top = (x.risk === 'Critical' && crit >= 3 && x.days >= 5) || (!!x.live && x.live.days >= 3 && streak >= 3 && x.risk !== 'Low');
@@ -453,7 +455,7 @@
       why.push(streak ? streak + ' consecutive observed day' + (streak === 1 ? '' : 's') + ' in the High or Critical zone' : 'not yet in the High or Critical zone');
       if (crit) why.push(crit + ' of those at Critical');
       why.push('returned on ' + x.days + ' distinct day' + (x.days === 1 ? '' : 's'));
-      if (x.multi) why.push(x.multi.sensors + ' of 8 satellites agree, ' + x.multi.pct + '% evidence-weighted');
+      if (x.multi) why.push(/^FW-\d{4}$/.test(x.id) ? 'live sky at this demo point: ' + x.multi.sensors + ' of 8 satellites see heat (reference only)' : x.multi.sensors + ' of 8 satellites agree, ' + x.multi.pct + '% evidence-weighted');
       if (x.live) why.push(x.live.days ? 'live feed: ' + x.live.n + ' passes on ' + x.live.days + ' day' + (x.live.days === 1 ? '' : 's') + ' in the last 7 within 1 km' + (x.live.night ? ', ' + x.live.night + ' at night' : '') : 'live feed: quiet at this point in the last 7 days');
       return { score: score, trend: trend, top: top, streak: streak, crit: crit, hot: hot, why: why };
     }
@@ -481,11 +483,17 @@
     function multiCheck(cand) {
       if (!window.FW_SAT) return;
       var pwMulti = $('#pw-multi'); if (pwMulti) { pwMulti.hidden = false; pwMulti.textContent = '8-satellite check running on the top ' + cand.length; }
-      FW_SAT.batch(cand.map(function (x) { return { lat: x.lat, lon: x.lon, conf: x.conf, dist: x.dist, days: x.days }; })).then(function (res) {
-        var ok = 0, conf = 0;
-        res.forEach(function (r, i) { if (!r) return; cand[i].multi = r; ok++; if (r.p >= 0.85) conf++; });
-        scoreAll(); update();
-        if (pwMulti) pwMulti.textContent = '8-satellite check: ' + conf + ' of ' + ok + ' confirmed by independent sensors';
+      /* Each row fills in the moment its own answer arrives; the queue never waits for the slowest point */
+      var done = 0, ok = 0, conf = 0, seen = 0, t = null;
+      function redraw() { t = null; scoreAll(); update(); }
+      cand.forEach(function (x) {
+        FW_SAT.check(x.lat, x.lon, { conf: x.conf, dist: x.dist, days: x.days, hoursGeo: 2, s3Orbits: 4 }).then(function (r) {
+          x.multi = r; ok++; if (r.p >= 0.85) conf++; if (r.sensors > 0) seen++;
+        }).catch(function () { }).finally(function () {
+          done++;
+          if (!t) t = setTimeout(redraw, 400);
+          if (pwMulti) pwMulti.textContent = done < cand.length ? '8-satellite check: ' + done + ' of ' + cand.length + ' done' : '8-satellite check on the live sky at the top ' + ok + ' demo points: heat seen at ' + seen + ', confirmed at ' + conf + ' (reference, not scored)';
+        });
       });
     }
     $$('.sg[data-order]').forEach(function (b) { b.addEventListener('click', function () { var o = b.getAttribute('data-order'); if (o === order) return; order = o; $$('.sg[data-order]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); var qc = $('#queue-copy'); if (qc) qc.textContent = o === 'priority' ? 'Critical and High findings only. Priority trend puts sites that have stayed Critical across their observed days and kept returning at the top, automatically: Critical on 3 or more days and back on 5 or more. Click a row to find it on the map.' : 'Critical and High findings only, ordered by severity then confidence. Click a row to find it on the map.'; update(); }); });
@@ -511,7 +519,7 @@
         q.forEach(function (x) {
           var li = document.createElement('li'); li.className = 'qrow'; li.tabIndex = 0; li.setAttribute('role', 'button'); li.setAttribute('aria-label', 'Show ' + x.id + ' on the map');
           li.classList.toggle('is-top', !!x.pri.top);
-          li.innerHTML = '<div>' + (x.pri.top ? '<span class="top-ribbon">Top priority · ' + x.pri.trend + '</span>' : '<span class="trend-tag ' + x.pri.trend + '">' + x.pri.trend + '</span>') + '<div class="t">' + esc(x.type) + ' · ' + esc(x.region) + '</div><div class="m">' + x.id + ' · ' + x.lat.toFixed(4) + ', ' + x.lon.toFixed(4) + '<br>' + x.dist.toFixed(1) + ' km from nearest mapped industrial site · seen on ' + x.days + ' separate day' + (x.days === 1 ? '' : 's') + '<br>' + esc(x.source) + ' · ' + x.dateS + '<br><span class="why">' + esc(x.pri.why.join(' · ')) + '</span>' + (x.multi ? '<br><button type="button" class="sx-chip qrow-acts" style="--tc:' + x.multi.tone + '" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">' + x.multi.label + ' · ' + x.multi.sensors + '/8 satellites · ' + x.multi.pct + '%</button>' : '') + '</div><div class="pbar" title="Priority score ' + x.pri.score + ' of 100"><i style="--w:' + x.pri.score + '%"></i><span class="mono">' + x.pri.score + '</span></div></div>' +
+          li.innerHTML = '<div>' + (x.pri.top ? '<span class="top-ribbon">Top priority · ' + x.pri.trend + '</span>' : '<span class="trend-tag ' + x.pri.trend + '">' + x.pri.trend + '</span>') + '<div class="t">' + esc(x.type) + ' · ' + esc(x.region) + '</div><div class="m">' + x.id + ' · ' + x.lat.toFixed(4) + ', ' + x.lon.toFixed(4) + '<br>' + x.dist.toFixed(1) + ' km from nearest mapped industrial site · seen on ' + x.days + ' separate day' + (x.days === 1 ? '' : 's') + '<br>' + esc(x.source) + ' · ' + x.dateS + '<br><span class="why">' + esc(x.pri.why.join(' · ')) + '</span>' + (x.multi ? (/^FW-\d{4}$/.test(x.id) ? '<br><button type="button" class="sx-chip qrow-acts" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">Live sky here · ' + x.multi.sensors + '/8 see heat · reference</button>' : '<br><button type="button" class="sx-chip qrow-acts" style="--tc:' + x.multi.tone + '" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">' + x.multi.label + ' · ' + x.multi.sensors + '/8 satellites · ' + x.multi.pct + '%</button>') : '') + '</div><div class="pbar" title="Priority score ' + x.pri.score + ' of 100"><i style="--w:' + x.pri.score + '%"></i><span class="mono">' + x.pri.score + '</span></div></div>' +
             '<div class="r" style="--tc:' + COLORS[x.risk] + '"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><div class="conf">' + x.conf + '%</div><div class="cl">Confidence</div><div class="meter"><i style="--w:' + x.conf + '%"></i></div><span class="qrow-acts"><button type="button" class="sos-btn" data-sos="' + x.id + '" aria-label="Draft an emergency SOS for ' + x.id + '">SOS</button><a class="nav-btn" href="respond.html?id=' + x.id + '" aria-label="Navigate to ' + x.id + '">Navigate</a></span></div>';
           var go = function () { if (!map) return; map.flyTo([x.lat, x.lon], Math.max(map.getZoom(), 6), { duration: reduced() ? 0 : 1.2 }); setTimeout(function () { x.m.openPopup(); }, reduced() ? 50 : 1300); mapEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' }); };
           li.addEventListener('click', function (e) { if (e.target.closest('.qrow-acts')) return; go(); }); li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });

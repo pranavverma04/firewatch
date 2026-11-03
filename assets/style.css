@@ -1580,3 +1580,6 @@ html.sx-open{overflow:hidden}
 .sx-lchip[aria-pressed="true"]{background:rgba(255,255,255,.05);color:var(--text-primary);border:1px solid var(--fc)}
 .sx-lchip:hover{color:var(--text-primary)}
 .sx-fresh em{font-style:normal;color:var(--text-dim);font-size:11px}
+
+.sx-demo{margin-bottom:14px;padding:10px 12px;border:1px dashed var(--line-strong);border-radius:9px;color:var(--text-secondary)}
+.sx-demo b{color:var(--text-primary);font-weight:500}

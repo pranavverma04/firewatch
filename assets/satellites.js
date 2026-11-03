@@ -103,7 +103,7 @@
       out.innerHTML = '<div class="panel-head"><div><span class="eyebrow">Result</span><h3>' + esc(id ? id + ' · ' : '') + esc(place || (lat.toFixed(4) + ', ' + lon.toFixed(4))) + '</h3></div></div>' + S.loading();
       var rec = {}; if (id && window.FW_API && FW_API.rows) FW_API.rows.forEach(function (x) { if (x.id === id) rec = x; });
       S.check(lat, lon, { conf: rec.conf, dist: rec.dist, days: rec.days }).then(function (r) {
-        out.innerHTML = '<div class="panel-head"><div><span class="eyebrow">Result</span><h3>' + esc(id ? id + ' · ' : '') + esc(place || (lat.toFixed(4) + ', ' + lon.toFixed(4))) + '</h3></div></div><div style="margin-top:14px">' + S.render(r) + '</div>';
+        out.innerHTML = '<div class="panel-head"><div><span class="eyebrow">Result</span><h3>' + esc(id ? id + ' · ' : '') + esc(place || (lat.toFixed(4) + ', ' + lon.toFixed(4))) + '</h3></div></div><div style="margin-top:14px">' + S.render(r, { demo: S.isDemo(id) }) + '</div>';
       }).catch(function (e) { out.innerHTML = '<p class="small">The check could not finish (' + esc(e && e.message) + ').</p>'; });
       try { history.replaceState(null, '', '?lat=' + lat.toFixed(5) + '&lon=' + lon.toFixed(5) + (id ? '&id=' + encodeURIComponent(id) : '')); } catch (e) { }
     }
