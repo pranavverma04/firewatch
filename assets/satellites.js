@@ -49,8 +49,8 @@
     var b = [68, 6, 97.5, 36], now = Date.now(), span = 24 * HOUR;
     host.innerHTML = '<p class="small">Reading pass times from the live feeds.</p>';
     Promise.all([
-      S.viirsIn(b, 2000).catch(function () { return { list: [] }; }),
-      S.modisIn(b, 2000).catch(function () { return { list: [] }; }),
+      S.viirsIn(b, 2000, 25).catch(function () { return { list: [] }; }),
+      S.modisIn(b, 2000, 25).catch(function () { return { list: [] }; }),
       S.eumTimes()
     ]).then(function (r) {
       var times = {};
@@ -69,7 +69,7 @@
       });
       function gap(list) {
         var t = list.filter(function (x) { return now - x <= span; }).sort(function (a, b) { return a - b; });
-        if (!t.length) return span; var g = t[0] - (now - span);
+        if (!t.length) return span; var g = 0; /* gaps between looks, and since the newest; the feed cap can hide the oldest hours */
         for (var i = 1; i < t.length; i++) g = Math.max(g, t[i] - t[i - 1]);
         return Math.max(g, now - t[t.length - 1]);
       }

@@ -82,20 +82,21 @@
   function esriQuery(url, b, fields, extra) {
     var u = url + '?where=' + encodeURIComponent((extra && extra.where) || '1=1') + '&geometry=' + b.map(function (v) { return v.toFixed(4); }).join(',') +
       '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=' + fields +
-      '&returnGeometry=true&outSR=4326&resultRecordCount=' + ((extra && extra.n) || 2000) + '&f=json';
+      '&returnGeometry=true&outSR=4326&resultRecordCount=' + ((extra && extra.n) || 2000) + (extra && extra.order ? '&orderByFields=' + encodeURIComponent(extra.order) : '') + '&f=json';
     return pooled(function () { return get(u, 16000); }).then(function (j) {
       if (j.error) throw new Error(j.error.message || 'query error');
       return { list: (j.features || []).map(function (f) { var a = f.attributes || {}; a._lat = f.geometry ? f.geometry.y : a.latitude; a._lon = f.geometry ? f.geometry.x : a.longitude; return a; }), capped: !!j.exceededTransferLimit };
     });
   }
-  function viirsIn(b, n) {
-    return esriQuery(VIIRS_URL, b, 'latitude,longitude,confidence,frp,acq_time,satellite,daynight', { n: n }).then(function (r) {
+  /* hours: only detections newer than this; results always come newest first, so a capped answer keeps the fresh ones */
+  function viirsIn(b, n, hours) {
+    return esriQuery(VIIRS_URL, b, 'latitude,longitude,confidence,frp,acq_time,satellite,daynight', { n: n, where: hours ? 'hours_old <= ' + hours : null, order: 'acq_time DESC' }).then(function (r) {
       r.list = r.list.map(function (a) { return { src: VIIRS_KEY[a.satellite] || 'n20', lat: a._lat, lon: a._lon, t: a.acq_time, conf: String(a.confidence || '').toLowerCase(), frp: a.frp, night: a.daynight === 'N' }; });
       return r;
     });
   }
-  function modisIn(b, n) {
-    return esriQuery(MODIS_URL, b, 'CONFIDENCE,FRP,ACQ_DATE,SATELLITE,DAYNIGHT', { n: n }).then(function (r) {
+  function modisIn(b, n, hours) {
+    return esriQuery(MODIS_URL, b, 'CONFIDENCE,FRP,ACQ_DATE,SATELLITE,DAYNIGHT', { n: n, where: hours ? 'HOURS_OLD <= ' + hours : null, order: 'ACQ_DATE DESC' }).then(function (r) {
       r.list = r.list.map(function (a) { var c = +a.CONFIDENCE; return { src: MODIS_KEY[a.SATELLITE] || 'terra', lat: a._lat, lon: a._lon, t: a.ACQ_DATE, conf: c >= 80 ? 'high' : c >= 50 ? 'nominal' : 'low', confN: c, frp: a.FRP, night: a.DAYNIGHT === 'N' }; });
       return r;
     });
@@ -303,7 +304,9 @@
     }
 
     /* 7-8. Geostationary: the satellites that never look away */
-    var cloud = R.cloud || {}, cloudy = cloud.mask === 'cloudy' || (cloud.meteo && cloud.meteo.now != null && cloud.meteo.now >= 70);
+    var cloud = R.cloud || {}, mNow = cloud.meteo && cloud.meteo.now != null ? cloud.meteo.now : null,
+      /* Cloudy only when the two cloud sources agree, or the model alone is near overcast */
+      cloudy = (cloud.mask === 'cloudy' && (mNow == null || mNow >= 30)) || (mNow != null && mNow >= 70);
     ['msg', 'mtg'].forEach(function (id) {
       var src = BY[id], r = R[id];
       if (!r || r.na) { add({ id: id, name: src.name + ' ' + src.inst, state: 'na', text: 'This point is outside its disk.', lr: 1 }); return; }
@@ -445,7 +448,9 @@
   /* ------------------------------------------------------------------ */
   function wmsLayer(layer, time, opts) {
     if (!window.L) return null;
-    return L.tileLayer.wms(EUM, Object.assign({ layers: layer, format: 'image/png', transparent: true, version: '1.3.0', time: time ? isoMin(time) : undefined, attribution: 'EUMETSAT, Copernicus', opacity: 1, className: 'sx-wms' }, opts || {}));
+    var o = { layers: layer, format: 'image/png', transparent: true, version: '1.3.0', attribution: 'EUMETSAT, Copernicus', opacity: 1, className: 'sx-wms' };
+    if (time) o.time = isoMin(time); /* an absent time means the newest frame; a literal "undefined" is rejected */
+    return L.tileLayer.wms(EUM, Object.assign(o, opts || {}));
   }
   /* Live polar points inside map bounds, coloured per satellite */
   function polarLayer(map, which) {
@@ -453,7 +458,7 @@
     function load() {
       if (!map.hasLayer(g)) return;
       var bb = map.getBounds(), b = [Math.max(-180, bb.getWest()), Math.max(-85, bb.getSouth()), Math.min(180, bb.getEast()), Math.min(85, bb.getNorth())], me = ++token;
-      (which === 'modis' ? modisIn(b, 2000) : viirsIn(b, 2000)).then(function (r) {
+      (which === 'modis' ? modisIn(b, 2000, 24) : viirsIn(b, 2000, 24)).then(function (r) {
         if (me !== token) return; g.clearLayers();
         r.list.forEach(function (a) {
           var s = BY[a.src];
