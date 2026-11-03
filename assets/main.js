@@ -338,7 +338,7 @@
     function popupHtml(x) {
       return '<div class="pop"><h4>' + esc(x.type) + '</h4><div class="id">' + x.id + ' · ' + x.lat.toFixed(4) + ', ' + x.lon.toFixed(4) + '</div><table>' +
         '<tr><td>Confidence</td><td>' + x.conf + '%</td></tr><tr><td>Nearest industrial site</td><td>' + x.dist.toFixed(1) + ' km</td></tr><tr><td>Distinct days observed</td><td>' + x.days + '</td></tr><tr><td>Region</td><td>' + esc(x.region) + '</td></tr><tr><td>Source</td><td>' + esc(x.source) + '</td></tr><tr><td>Detected</td><td>' + x.dateS + '</td></tr></table>' +
-        '<div class="pop-actions"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><span class="pop-btns"><button type="button" class="btn btn-ghost btn-sm ev-btn" data-evidence="' + x.id + '">Satellite evidence</button><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '">Thermal DNA</a><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '#dna-history">7-day threat history</a><a class="btn btn-ghost btn-sm ev-btn" href="regions.html?q=' + encodeURIComponent(x.region) + '">Analyse region</a>' + (x.risk === 'Critical' || x.risk === 'High' ? '<button type="button" class="btn btn-sm ev-btn sos-pop" data-sos="' + x.id + '">Emergency SOS</button><a class="btn btn-ghost btn-sm ev-btn" href="respond.html?id=' + x.id + '">Navigate</a>' : '') + '</span></div></div>';
+        '<div class="pop-actions"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><span class="pop-btns"><button type="button" class="btn btn-ghost btn-sm ev-btn" data-evidence="' + x.id + '">Satellite evidence</button>' + (window.FW_SAT ? '<button type="button" class="btn btn-ghost btn-sm ev-btn" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">8-satellite check</button>' : '') + '<a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '">Thermal DNA</a><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '#dna-history">7-day threat history</a><a class="btn btn-ghost btn-sm ev-btn" href="regions.html?q=' + encodeURIComponent(x.region) + '">Analyse region</a>' + (x.risk === 'Critical' || x.risk === 'High' ? '<button type="button" class="btn btn-sm ev-btn sos-pop" data-sos="' + x.id + '">Emergency SOS</button><a class="btn btn-ghost btn-sm ev-btn" href="respond.html?id=' + x.id + '">Navigate</a>' : '') + '</span></div></div>';
     }
     var map = null, group = null, evm = null;
     if (window.L) {
@@ -379,6 +379,7 @@
         map.on('baselayerchange', function () { if (evm && evm.isOn()) evm.leave(); });
       }
       group = L.layerGroup().addTo(map);
+      liveLayers(map);
       rows.forEach(function (x) {
         var rad = 4 + x.conf / 14;
         x.m = L.circleMarker([x.lat, x.lon], { radius: rad, color: 'rgba(4,8,16,.75)', weight: 1, fillColor: COLORS[x.risk], fillOpacity: 0.92 });
@@ -391,6 +392,32 @@
       setTimeout(function () { map.invalidateSize(); }, 600);
     } else {
       mapEl.innerHTML = '<div class="qempty" style="margin:18px">The map library did not load, so the world map is hidden. The counts and the queue below still work.</div>';
+    }
+    /* Live layers from the whole constellation. Off by default so the screened sample view stays as it was. */
+    function liveLayers(map) {
+      var bar = $('#sx-layers'); if (!bar || !window.FW_SAT) return;
+      bar.hidden = false;
+      var made = {};
+      function make(k) {
+        if (made[k]) return made[k];
+        if (k === 'viirs' || k === 'modis') {
+          made[k] = FW_SAT.polarLayer(map, k);
+          made[k].on('sx:loaded', function (e) { var n = $('.sx-lchip[data-live="' + k + '"] .n'); if (n) n.textContent = e.err ? 'off-line' : e.n.toLocaleString('en-IN') + (e.capped ? '+' : ''); });
+        }
+        else if (k === 'geo') made[k] = L.layerGroup([FW_SAT.wms('msg_iodc:fire'), FW_SAT.wms('mtg_fd:frp')]);
+        else if (k === 's3') made[k] = L.layerGroup([FW_SAT.wms('copernicus:sentinel3a_slstr_level2_frp'), FW_SAT.wms('copernicus:sentinel3b_slstr_level2_frp')]);
+        return made[k];
+      }
+      $$('.sx-lchip[data-live]').forEach(function (c) {
+        c.addEventListener('click', function () {
+          var k = c.getAttribute('data-live'), on = c.getAttribute('aria-pressed') !== 'true', l = make(k);
+          c.setAttribute('aria-pressed', on ? 'true' : 'false');
+          if (on) l.addTo(map); else map.removeLayer(l);
+          if (group && on) group.eachLayer(function (m) { if (m.bringToFront) m.bringToFront(); });
+        });
+      });
+      /* Geostationary frames refresh every 10 minutes while the page is open */
+      setInterval(function () { ['geo', 's3'].forEach(function (k) { if (made[k] && map.hasLayer(made[k])) made[k].eachLayer(function (w) { if (w.setParams) w.setParams({ _r: Date.now() }); }); }); }, 600000);
     }
     var kpiEls = { view: $('#kpi-view'), crit: $('#kpi-crit'), high: $('#kpi-high'), ind: $('#kpi-ind'), rec: $('#kpi-rec') };
     var shownV = { view: 0, crit: 0, high: 0, ind: 0, rec: 0 }; var tweens = {};
@@ -417,13 +444,16 @@
       var streak = 0; for (var i = traj.length - 1; i >= 0 && (traj[i] === 'Critical' || traj[i] === 'High'); i--) streak++;
       var score = (x.risk === 'Critical' ? 40 : x.risk === 'High' ? 25 : x.risk === 'Medium' ? 8 : 0) + Math.min(x.days, 10) * 4 + (streak >= 5 ? 15 : streak >= 3 ? 10 : 0) + (x.conf >= 85 ? 5 : 0);
       if (x.live) { if (x.live.days >= 3) score += 10; else if (x.live.days >= 1) score += 4; if (x.live.n >= 2 && x.live.night / x.live.n >= 0.4) score += 5; }
-      score = Math.min(100, score);
+      /* Multi-satellite check: agreement across independent sensors lifts a site, a clear-sky silence lowers it */
+      if (x.multi) { if (x.multi.p >= 0.85) score += 6; else if (x.multi.p >= 0.6) score += 3; else if (x.multi.p < 0.35) score -= 6; }
+      score = Math.max(0, Math.min(100, score));
       var trend = x.risk === 'Critical' && crit >= 4 ? 'sustained' : x.risk === 'Critical' && crit >= 1 ? 'rising' : (x.risk === 'High' && streak >= 3) ? 'holding' : (x.risk === 'High' || x.risk === 'Critical') ? 'emerging' : 'steady';
       var top = (x.risk === 'Critical' && crit >= 3 && x.days >= 5) || (!!x.live && x.live.days >= 3 && streak >= 3 && x.risk !== 'Low');
       var why = [];
       why.push(streak ? streak + ' consecutive observed day' + (streak === 1 ? '' : 's') + ' in the High or Critical zone' : 'not yet in the High or Critical zone');
       if (crit) why.push(crit + ' of those at Critical');
       why.push('returned on ' + x.days + ' distinct day' + (x.days === 1 ? '' : 's'));
+      if (x.multi) why.push(x.multi.sensors + ' of 8 satellites agree, ' + x.multi.pct + '% evidence-weighted');
       if (x.live) why.push(x.live.days ? 'live feed: ' + x.live.n + ' passes on ' + x.live.days + ' day' + (x.live.days === 1 ? '' : 's') + ' in the last 7 within 1 km' + (x.live.night ? ', ' + x.live.night + ' at night' : '') : 'live feed: quiet at this point in the last 7 days');
       return { score: score, trend: trend, top: top, streak: streak, crit: crit, hot: hot, why: why };
     }
@@ -444,7 +474,18 @@
           var days = {}, n = 0, night = 0;
           (j.features || []).forEach(function (f) { var a = f.attributes; if (!a || a.latitude == null || fwHaversine(x.lat, x.lon, a.latitude, a.longitude) > 1) return; n++; if (a.daynight === 'N') night++; if (a.acq_date) days[new Date(a.acq_date).toISOString().slice(0, 10)] = 1; });
           x.live = { n: n, days: Object.keys(days).length, night: night }; if (n) confirmed++;
-        }).catch(function () { x.live = null; }).finally(function () { done++; if (done === cand.length) { scoreAll(); update(); if (pwLive) pwLive.textContent = 'Live check: ' + confirmed + ' of ' + cand.length + ' top candidates have VIIRS passes within 1 km in the last 7 days'; } });
+        }).catch(function () { x.live = null; }).finally(function () { done++; if (done === cand.length) { scoreAll(); update(); if (pwLive) pwLive.textContent = 'Live check: ' + confirmed + ' of ' + cand.length + ' top candidates have VIIRS passes within 1 km in the last 7 days'; multiCheck(cand); } });
+      });
+    }
+    /* Second pass: the same candidates against all eight satellites (polar, Sentinel-3, geostationary, cloud) */
+    function multiCheck(cand) {
+      if (!window.FW_SAT) return;
+      var pwMulti = $('#pw-multi'); if (pwMulti) { pwMulti.hidden = false; pwMulti.textContent = '8-satellite check running on the top ' + cand.length; }
+      FW_SAT.batch(cand.map(function (x) { return { lat: x.lat, lon: x.lon, conf: x.conf, dist: x.dist, days: x.days }; })).then(function (res) {
+        var ok = 0, conf = 0;
+        res.forEach(function (r, i) { if (!r) return; cand[i].multi = r; ok++; if (r.p >= 0.85) conf++; });
+        scoreAll(); update();
+        if (pwMulti) pwMulti.textContent = '8-satellite check: ' + conf + ' of ' + ok + ' confirmed by independent sensors';
       });
     }
     $$('.sg[data-order]').forEach(function (b) { b.addEventListener('click', function () { var o = b.getAttribute('data-order'); if (o === order) return; order = o; $$('.sg[data-order]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); var qc = $('#queue-copy'); if (qc) qc.textContent = o === 'priority' ? 'Critical and High findings only. Priority trend puts sites that have stayed Critical across their observed days and kept returning at the top, automatically: Critical on 3 or more days and back on 5 or more. Click a row to find it on the map.' : 'Critical and High findings only, ordered by severity then confidence. Click a row to find it on the map.'; update(); }); });
@@ -470,7 +511,7 @@
         q.forEach(function (x) {
           var li = document.createElement('li'); li.className = 'qrow'; li.tabIndex = 0; li.setAttribute('role', 'button'); li.setAttribute('aria-label', 'Show ' + x.id + ' on the map');
           li.classList.toggle('is-top', !!x.pri.top);
-          li.innerHTML = '<div>' + (x.pri.top ? '<span class="top-ribbon">Top priority · ' + x.pri.trend + '</span>' : '<span class="trend-tag ' + x.pri.trend + '">' + x.pri.trend + '</span>') + '<div class="t">' + esc(x.type) + ' · ' + esc(x.region) + '</div><div class="m">' + x.id + ' · ' + x.lat.toFixed(4) + ', ' + x.lon.toFixed(4) + '<br>' + x.dist.toFixed(1) + ' km from nearest mapped industrial site · seen on ' + x.days + ' separate day' + (x.days === 1 ? '' : 's') + '<br>' + esc(x.source) + ' · ' + x.dateS + '<br><span class="why">' + esc(x.pri.why.join(' · ')) + '</span></div><div class="pbar" title="Priority score ' + x.pri.score + ' of 100"><i style="--w:' + x.pri.score + '%"></i><span class="mono">' + x.pri.score + '</span></div></div>' +
+          li.innerHTML = '<div>' + (x.pri.top ? '<span class="top-ribbon">Top priority · ' + x.pri.trend + '</span>' : '<span class="trend-tag ' + x.pri.trend + '">' + x.pri.trend + '</span>') + '<div class="t">' + esc(x.type) + ' · ' + esc(x.region) + '</div><div class="m">' + x.id + ' · ' + x.lat.toFixed(4) + ', ' + x.lon.toFixed(4) + '<br>' + x.dist.toFixed(1) + ' km from nearest mapped industrial site · seen on ' + x.days + ' separate day' + (x.days === 1 ? '' : 's') + '<br>' + esc(x.source) + ' · ' + x.dateS + '<br><span class="why">' + esc(x.pri.why.join(' · ')) + '</span>' + (x.multi ? '<br><button type="button" class="sx-chip qrow-acts" style="--tc:' + x.multi.tone + '" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">' + x.multi.label + ' · ' + x.multi.sensors + '/8 satellites · ' + x.multi.pct + '%</button>' : '') + '</div><div class="pbar" title="Priority score ' + x.pri.score + ' of 100"><i style="--w:' + x.pri.score + '%"></i><span class="mono">' + x.pri.score + '</span></div></div>' +
             '<div class="r" style="--tc:' + COLORS[x.risk] + '"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><div class="conf">' + x.conf + '%</div><div class="cl">Confidence</div><div class="meter"><i style="--w:' + x.conf + '%"></i></div><span class="qrow-acts"><button type="button" class="sos-btn" data-sos="' + x.id + '" aria-label="Draft an emergency SOS for ' + x.id + '">SOS</button><a class="nav-btn" href="respond.html?id=' + x.id + '" aria-label="Navigate to ' + x.id + '">Navigate</a></span></div>';
           var go = function () { if (!map) return; map.flyTo([x.lat, x.lon], Math.max(map.getZoom(), 6), { duration: reduced() ? 0 : 1.2 }); setTimeout(function () { x.m.openPopup(); }, reduced() ? 50 : 1300); mapEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' }); };
           li.addEventListener('click', function (e) { if (e.target.closest('.qrow-acts')) return; go(); }); li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
@@ -560,7 +601,7 @@
     function fwPopup(x) {
       return '<div class="pop"><h4>' + esc(x.type) + '</h4><div class="id">' + x.id + ' · queue position ' + x.rank + ' of ' + rows.length + '</div><table>' +
         '<tr><td>Confidence</td><td>' + x.conf + '%</td></tr><tr><td>Nearest industrial site</td><td>' + x.dist.toFixed(1) + ' km</td></tr><tr><td>Distinct days observed</td><td>' + x.days + '</td></tr><tr><td>Region</td><td>' + esc(x.region) + '</td></tr><tr><td>Source</td><td>' + esc(x.source) + '</td></tr></table>' +
-        '<div class="pop-actions"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><span class="pop-btns"><button type="button" class="btn btn-ghost btn-sm ev-btn" data-evidence="' + x.id + '">Satellite evidence</button><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '">Thermal DNA</a><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '#dna-history">7-day threat history</a><a class="btn btn-ghost btn-sm ev-btn" href="regions.html?q=' + encodeURIComponent(x.region) + '">Analyse region</a>' + (x.risk === 'Critical' || x.risk === 'High' ? '<button type="button" class="btn btn-sm ev-btn sos-pop" data-sos="' + x.id + '">Emergency SOS</button><a class="btn btn-ghost btn-sm ev-btn" href="respond.html?id=' + x.id + '">Navigate</a>' : '') + '</span></div></div>';
+        '<div class="pop-actions"><span class="tag" style="--tc:' + COLORS[x.risk] + '">' + x.risk + '</span><span class="pop-btns"><button type="button" class="btn btn-ghost btn-sm ev-btn" data-evidence="' + x.id + '">Satellite evidence</button>' + (window.FW_SAT ? '<button type="button" class="btn btn-ghost btn-sm ev-btn" data-satcheck="' + x.lat + ',' + x.lon + '" data-id="' + x.id + '">8-satellite check</button>' : '') + '<a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '">Thermal DNA</a><a class="btn btn-ghost btn-sm ev-btn" href="thermal-dna.html?id=' + x.id + '#dna-history">7-day threat history</a><a class="btn btn-ghost btn-sm ev-btn" href="regions.html?q=' + encodeURIComponent(x.region) + '">Analyse region</a>' + (x.risk === 'Critical' || x.risk === 'High' ? '<button type="button" class="btn btn-sm ev-btn sos-pop" data-sos="' + x.id + '">Emergency SOS</button><a class="btn btn-ghost btn-sm ev-btn" href="respond.html?id=' + x.id + '">Navigate</a>' : '') + '</span></div></div>';
     }
 
     var mapA = null, mapB = null, groups = { raw: null, fw: null }, bases = [];

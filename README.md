@@ -57,6 +57,23 @@ One CSV contract sits between each stage, so any stage can be rebuilt or replace
 | `assets/` | Site scripts, styles, imagery and the hero video |
 | `dashboard/` | The Python operational dashboard (Streamlit), see [`dashboard/README.md`](dashboard/README.md) |
 
+## Eight-satellite constellation
+
+NASA FIRMS alone reaches us about three hours after a pass, from three VIIRS satellites. FireWatch now reads eight satellites side by side, all keyless and all in the browser:
+
+| Satellite | Instrument | Orbit | Refresh | Source |
+|---|---|---|---|---|
+| Suomi NPP, NOAA-20, NOAA-21 | VIIRS, 375 m | polar | 2 passes a day each | NASA FIRMS via Esri Living Atlas |
+| Terra, Aqua | MODIS, 1 km | polar | 2 passes a day each | NASA FIRMS via Esri Living Atlas |
+| Sentinel-3A, 3B | SLSTR FRP, 1 km | polar | 2 to 4 passes a day | Copernicus via EUMETSAT EUMETView |
+| Meteosat-9 (45.5° E) | SEVIRI active fire + cloud mask | geostationary, covers India | every 15 min | EUMETSAT EUMETView |
+| MTG-I1 (0°) | FCI fire radiative power | geostationary, West Asia, Africa, Europe | every 10 min | EUMETSAT EUMETView |
+
+- **Delay.** Measured on 3 Nov 2026: newest VIIRS data 2 h 43 min old, newest look from the constellation 21 min old (Meteosat-9).
+- **Multi-satellite check.** Each satellite is asked on its own. The check starts at 35% for one raw alert and multiplies the odds by a written weight per check: a VIIRS or MODIS pixel per satellite, a Sentinel-3 FRP pixel, geostationary fire in the last 3 hours (more if it holds across 3+ frames), night pixels, weak daytime-only pixels, seven days of silence, old evidence. A geostationary "nothing" under cloud counts for nothing. Capped at 97%.
+- **Where it shows.** Dashboard: live layer chips on the map, an "8-satellite check" button in every popup, a constellation panel, and the top 12 queue items are checked automatically and carry a badge. Agreement lifts the priority score a little, clear-sky silence lowers it. The three rules and the risk tiers are unchanged.
+- Geostationary layers are images, so `assets/constellation.js` reads fire pixels straight from the PNG on a canvas.
+
 ## Website features
 
 ### Pages
@@ -72,6 +89,7 @@ One CSV contract sits between each stage, so any stage can be rebuilt or replace
 | **Respond** (`respond.html`) | Road route from your position to an incident, with an arrival time that accounts for the hour's traffic, the weather on the way and emergency right of way. Live GPS follow re-routes if you leave the line by more than 80 m. One-tap hand-off to Google Maps, Apple Maps or Waze |
 | **Report** (`report.html`) | Builds a situation report (feed, priority list, regions, alerts, dispatches, every timestamp and rule) and exports it as **PDF, HTML, Word, Excel, CSV, JSON, Markdown or plain text**. Everything is built in the browser and nothing is uploaded |
 | **How it decides** (`how-it-decides.html`) | Interactive walk-through of the three rules on a real record, plus live screening of the sky above you |
+| **Satellites** (`satellites.html`) | The eight-satellite constellation: newest look per satellite, real pass times over India in the last 24 hours, the longest blind gap, and a multi-satellite check for any point with every weight shown |
 | **Architecture** (`architecture.html`) | Acquisition, rule engine and delivery, and the CSV handover contract |
 | **FAQ** (`faq.html`) | Straight answers: why rules and not a model, offline use, coverage, speed |
 

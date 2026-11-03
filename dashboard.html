@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,600;125,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="assets/style.css?v=42">
+<link rel="stylesheet" href="assets/style.css?v=43">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -45,6 +45,7 @@
         <li><a href="compare.html"><b>Compare</b><span>Raw NASA feed against the screened result</span></a></li>
         <li><a href="thermal-dna.html"><b>Thermal DNA</b><span>Is this heat normal here, with a seven-day history</span></a></li>
         <li><a href="how-it-decides.html"><b>How it decides</b><span>Hold to verify a hotspot, live or sample</span></a></li>
+        <li><a href="satellites.html"><b>Satellites</b><span>Eight satellites, newest look, check any point</span></a></li>
       </ul>
     </li>
     <li class="nav-group">
@@ -117,6 +118,13 @@
             <div class="note">Marker size follows confidence</div>
           </div>
         </div>
+        <div class="sx-layers" id="sx-layers" role="group" aria-label="Live satellite layers" hidden>
+          <span class="lbl">Live layers</span>
+          <button type="button" class="sx-lchip" data-live="viirs" aria-pressed="false" style="--fc:#F59A45"><i></i>VIIRS ×3 <span class="n"></span></button>
+          <button type="button" class="sx-lchip" data-live="modis" aria-pressed="false" style="--fc:#5A9BD8"><i></i>MODIS ×2 <span class="n"></span></button>
+          <button type="button" class="sx-lchip" data-live="s3" aria-pressed="false" style="--fc:#B48CF0"><i></i>Sentinel-3</button>
+          <button type="button" class="sx-lchip" data-live="geo" aria-pressed="false" style="--fc:#4FA97F"><i></i>Geostationary, now</button>
+        </div>
         <p class="map-hint">Drag to pan, use the plus and minus to zoom, click a point for its record. The Map / Satellite switch above the map places each hotspot on real imagery with place names, so you can see the plant, the field or the forest under a detection. The layers button also offers OpenStreetMap streets.</p>
       </div>
       <div class="panel" id="queue">
@@ -130,7 +138,7 @@
         <p class="small" style="margin-top:10px" id="queue-copy">Critical and High findings only. Priority trend puts sites that have stayed Critical across their observed days and kept returning at the top, automatically: Critical on 3 or more days and back on 5 or more. Click a row to find it on the map.</p>
         <div class="pwatch" id="pwatch" hidden>
           <div class="pw-l"><span class="eyebrow">Priority watch</span><b id="pw-count">0</b><span class="pw-lbl">top-priority sites in view</span></div>
-          <div class="pw-r"><div class="mono" id="pw-longest"></div><div class="mono" id="pw-live">Live check pending</div></div>
+          <div class="pw-r"><div class="mono" id="pw-longest"></div><div class="mono" id="pw-live">Live check pending</div><div class="mono" id="pw-multi" hidden></div></div>
         </div>
         <div class="trig">
           <div><b id="trig-a">0</b><span>Within 3 km of a mapped site</span></div>
@@ -148,6 +156,19 @@
         </div>
       </div>
     </div>
+    <div class="panel sx-panel" id="sx-panel">
+      <div class="panel-head">
+        <div><span class="eyebrow">Constellation · live</span><h3>Eight satellites, one picture</h3></div>
+        <a class="btn btn-ghost btn-sm" href="satellites.html">Open the Satellites page</a>
+      </div>
+      <p class="small" style="margin-top:10px">NASA FIRMS alone arrives about three hours late, from three VIIRS satellites. FireWatch now also reads MODIS on Terra and Aqua, Sentinel-3 SLSTR, and two geostationary satellites that image the same disk every 10 to 15 minutes. Every queue item is checked against all of them.</p>
+      <div class="sx-fresh">
+        <div class="hi"><b id="sx-best">–</b><span>Newest look, all satellites <em class="mono" id="sx-best-id"></em></span></div>
+        <div><b id="sx-viirs">–</b><span>Newest look, VIIRS only (before)</span></div>
+        <div><b id="sx-gain">–</b><span>Delay removed</span></div>
+      </div>
+      <div class="sx-grid" id="sx-grid"></div>
+    </div>
   </div>
 </section>
 </main>
@@ -159,7 +180,7 @@
       <p>Release 1.0 · Screening layer for satellite thermal anomalies.</p>
     </div>
     <div class="fr">
-      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
+      <p class="mono">Data: NASA FIRMS (VIIRS, MODIS), EUMETSAT (Meteosat-9, MTG-I1), Copernicus Sentinel-3, OpenStreetMap contributors. Basemaps © Esri, © OpenStreetMap contributors. Punjab alert figures via The Tribune.</p>
     </div>
   </div>
 </footer>
@@ -172,7 +193,9 @@
 <script src="assets/data.js?v=2"></script>
 <script src="assets/evidence.js?v=43"></script>
 <script src="assets/sos.js?v=37"></script>
-<script src="assets/main.js?v=44"></script>
+<script src="assets/constellation.js?v=1"></script>
+<script src="assets/main.js?v=45"></script>
+<script src="assets/satellites.js?v=1"></script>
 <script src="assets/alerts.js?v=31"></script>
 <script src="assets/therma.js?v=37"></script>
 <script src="assets/therma-kb.js?v=37"></script>
